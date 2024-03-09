@@ -2,9 +2,13 @@
 
 Document Object Model- in-memory object representation of an HTML document.  It provides a way to interact with a web page using JavaScript and provides the functionality needed to build modern interactive user experiences.
 
+ HTML you write isn't the DOM itself, but instead it is the input that a browser uses to create the DOM. In some instances, the browser, without any instruction, also modifies it. For example, even if you don't include a `head` element, a corresponding DOM `head` node will be present when the browser creates the DOM.
+
 Application programming interface ([*API*](https://www.w3.org/TR/DOM-Level-2-Core/glossary.html#dt-API)) for valid [*HTML*](https://www.w3.org/TR/DOM-Level-2-Core/glossary.html#dt-HTML)and well-formed [*XML*](https://www.w3.org/TR/DOM-Level-2-Core/glossary.html#dt-XML) documents. The DOM is a programming [*API*](https://www.w3.org/TR/DOM-Level-2-Core/glossary.html#dt-API) for documents.
 
 Anything found in an HTML or XML document can be accessed, changed, deleted, or added using the Document Object Model
+
+
 
 https://www.w3.org/TR/DOM-Level-2-Core/introduction.html
 
@@ -286,7 +290,7 @@ If you're writing a program, you should probably use the `instanceof` operator o
 
 **TraversingNodes**
 
-DOM nodes connect via a set of properties gthat point from one node to another with defined relationships. 
+DOM nodes connect via a set of properties that point from one node to another with defined relationships. 
 
 `childNodes` property returns a collection of nodes directly beneath a given node. Each element in the returned collection has a `parentNode` property that points back to the original node. 
 
@@ -747,10 +751,871 @@ These properties often don't give you what you want, though; you probably want a
 
 You can change content:
 
-```js
-> document.querySelector('a').textContent = 'step backward';
-= "step backward"
-```
+- [ ] ```js
+  > document.querySelector('a').textContent = 'step backward';
+  = "step backward"
+  ```
+
 
 Be careful when setting `textContent`; doing so removes all child nodes from the element and replaces them with a text node that contains the value:
 
+```html
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <title>My Site</title>
+  </head>
+  <body>
+    <div>
+      Welcome to the site!<br>
+      The time is 9:15 am.<br>
+      You are logged in as <a href="/account">Kabu</a>.
+    </div>
+  </body>
+</html>
+```
+
+Finding the text node you must update would be tricky; replacing the time would probably require a regular expression:
+
+```js
+var div = document.querySelector('div');
+var node;
+var newText;
+
+for (let index = 0; index < div.childNodes.length; index += 1) {
+  node = div.childNodes[index];
+  if (node instanceof Text && node.nodeValue.indexOf('The time is') !== -1) {
+    newText = node.nodeValue.replace(/\d{1,2}:\d{2} [ap]m/, '9:16 am');
+    node.nodeValue = newText;
+  }
+}
+```
+
+Compare that with this simpler example that uses a `<span>` tag:
+
+```html
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <title>My Site</title>
+  </head>
+  <body>
+    <div>
+      Welcome to the site!<br>
+      The time is <span class="time">9:15 am</span>.<br>
+      You are logged in as <a href="/account">Kabu</a>.
+    </div>
+  </body>
+</html>
+```
+
+```js
+document.querySelector('.time').textContent = '9:16 am';
+```
+
+
+
+Examples
+
+The page has a table of contents with the title "Contents" and links to the different content sections on "Naming and etymology," "Taxonomy and evolution," etc.
+
+Use three different DOM methods to retrieve a reference to the `div` element that contains the table of contents.
+
+```js
+document.getElementById('toc');
+document.querySelector('#toc');
+document.querySelectorAll('.toc')[0];
+```
+
+
+
+**Creating and Moving DOM Nodes**
+
+We can add a paragraph to this document with `createElement` and `appendChild`:
+
+```js
+let paragraph = document.createElement('p');
+paragraph.textContent = 'This is a test.';
+document.body.appendChild(paragraph);
+```
+
+You can also create a text node and append it to the paragraph element:
+
+```js
+let text = document.createTextNode('This is a test.');
+let paragraph = document.createElement('p');
+paragraph.appendChild(text);
+document.body.appendChild(paragraph);
+```
+
+**Creating New Nodes**
+
+You can create nodes in two ways: you can create new empty nodes with the `document.create*` methods, or you can clone an existing node hierarchy:
+
+| Node Creation Method              | Returns                  |
+| :-------------------------------- | :----------------------- |
+| `document.createElement(tagName)` | A new Element node       |
+| `document.createTextNode(text)`   | A new Text node          |
+| `node.cloneNode(deepClone)`       | Returns a copy of `node` |
+
+If `deepClone` is `true`, `cloneNode` makes copies of `node` and *all its descendant nodes*; otherwise, `cloneNode` merely copies `node`. Don't rely on a specific default value for `deepClone`; it has changed over time, so always specify `true` or `false` to get what you want. In most cases, you'll use `true` to get a copy of the node and its children.
+
+```js
+> paragraph;
+= <p>This is a test.</p>
+> let paragraph2 = paragraph.cloneNode(true);
+> document.body.appendChild(paragraph2);
+```
+
+The page now has two copies of the paragraph. The DOM objects that represent them are independent of each other — changing one does not change the other.
+
+**Adding Nodes to the DOM**
+
+You can append, insert, and replace nodes with methods on the node's parent:
+
+| Parent Node Method                      | Description                                                  |
+| :-------------------------------------- | :----------------------------------------------------------- |
+| `parent.appendChild(node)`              | Append `node` to the end of `parent.childNodes`              |
+| `parent.insertBefore(node, targetNode)` | Insert `node` into `parent.childNodes` before `targetNode`   |
+| `parent.replaceChild(node, targetNode)` | Remove `targetNode` from `parent.childNodes` and insert `node` in its place |
+
+`document.appendChild` causes an error. Use `document.body.appendChild` instead.
+
+You can append anything with append but you have to append a node to appendChild 
+
+**No Node may appear twice in the DOM.** If you try to add a node that is already in the DOM, it gets removed from the original location. Thus, you can move an existing node by inserting it where you want it.
+
+| Description                                           |                                                              |
+| :---------------------------------------------------- | ------------------------------------------------------------ |
+| `element.insertAdjacentElement(position, newElement)` | Inserts `newElement` at `position` relative to `element`     |
+| `element.insertAdjacentText(position, text)`          | Inserts Text node that contains `text` at `position` relative to `element` |
+
+`position` must be one of the following String values:
+
+| Position        | Description                           |
+| :-------------- | :------------------------------------ |
+| `"beforebegin"` | Before the element                    |
+| `"afterbegin"`  | Before the first child of the element |
+| `"beforeend"`   | After the last child of the element   |
+| `"afterend"`    | After the element                     |
+
+
+
+**Removing Nodes**
+
+When you remove a node from the DOM, it becomes eligible for garbage collection unless you keep a reference to the node in a variable. You cannot access an object that is eligible for garbage collection, so it's no longer available to your program.
+
+| Element Method             | Description                            |
+| :------------------------- | :------------------------------------- |
+| `node.remove()`            | Remove `node` from the DOM             |
+| `parent.removeChild(node)` | Remove `node` from `parent.childNodes` |
+
+```js
+> paragraph.remove();
+> paragraph2.remove();
+```
+
+
+
+**Browser Object Model (BOM)**
+
+You can access other components of the browser with JavaScript that go beyond the page contents. These components include:
+
+- The windows used to display web pages
+- The browser's history
+- Sensors, including location
+
+
+
+Examples
+
+Toggling hidden
+
+```js
+document.getElementById('toggle').onclick = e => {
+  e.preventDefault();
+  let notice = document.getElementById('notice');
+  if (notice.getAttribute('class') === 'hidden') {
+    notice.setAttribute('class', 'visible');
+  } else {
+    notice.setAttribute('class', 'hidden');
+  }
+};
+```
+
+
+SUMMARY 
+
+- The **Document Object Model**, or **DOM**, is an in-memory object representation of an HTML document. It provides a way to interact with a web page using JavaScript, which provides the functionality required to build modern interactive user experiences.
+- The DOM is a hierarchy of **nodes**. Each node can contain any number of child nodes.
+- There are different types of nodes. The types you should be familiar with are **elements** and **text nodes**.
+- The whitespace in an HTML document may result in empty text nodes in the DOM.
+- Useful properties of nodes include `nodeName`, `nodeType`, `nodeValue`, and `textContent`.
+- Nodes have properties that traverse the DOM tree: `firstChild`, `lastChild`, `childNodes`, `nextSibling`, `previousSibling`, and `parentNode`.
+- Element nodes have `getAttribute`, `setAttribute`, and `hasAttribute` methods to manipulate HTML attributes.
+- Elements have properties that let you read and alter the `id`, `name`, `title`, and `value`.
+- Elements let you read and change CSS classes and style properties via the `classList` and `style` properties.
+- `document.getElementById(id)` finds a single Element with the specified `id`.
+- `document.getElementsByTagName(name)` and `document.getElementsByClassName(name)` find any Elements with the specified `tagName` or `class`.
+- `document.querySelector(selector)` returns the first Element that matches a CSS selector. `document.querySelectorAll(selector)` is similar but returns all matching elements.
+- Elements have properties to traverse the DOM tree: `firstElementChild`, `lastElementChild`, `children`, `nextElementSibling`, and `previousElementSibling`.
+- You can create new DOM nodes with `document.createElement(tagName)` or `document.createTextNode(text)`.
+- You can create a copy of a node with `node.cloneNode(deepClone)`.
+- `parent.appendChild(node)`, `parent.insertBefore(node, targetNode)`, `parent.replaceChild(node, targetNode)`, `element.insertAdjacentElement(position, newElement)`, and `element.insertAdjacentText(position, text)` add nodes to the DOM.
+- `node.remove()` and `parent.removeChild(node)` remove nodes from the DOM.
+
+
+
+**EXERCISES**
+
+https://launchschool.com/exercise_sets/70756443
+
+**Functions to get all child nodes (inirect and direct)**
+
+```js
+function countNodes(node) {
+  let count = node.childNodes.length;
+  Array.prototype.slice.call(node.childNodes).forEach((child) => {
+    count += countNodes(child);
+  });
+
+  return count;
+}
+
+function childNodes(id) {
+  let parent = document.getElementById(id);
+
+  let direct = parent.childNodes.length;
+  let indirect = countNodes(parent) - direct;
+
+  return [ direct, indirect ];
+}
+
+//or using walk
+
+function childNodes(id) {
+  id = String(id);
+  let parent = document.getElementById(id);
+  let inner = parentNode.childNodes.length;
+  let outer = 0;
+  walk(parent, node => {
+    if (node.parentNode !== parent && node !== parent) {
+      outer++;
+    }
+  })
+  return [inner, outer];
+}
+```
+
+Numeric `id` values won't work as an argument for `querySelector`. Check out the SO post on [using numeric `id` attribute value as argument for `querySelector](https://stackoverflow.com/questions/20306204/using-queryselector-with-ids-that-are-numbers).
+
+You cant use an id in query selector without element.querySelector(`[id="${endId}"]`)
+
+
+
+using `contains` !ancestor.contains(descendant)
+
+
+
+
+
+**RUNNING JS/CSS ALONGSIDE HTML**
+
+in the js file enclose the js with `window.onload` event Handler function so that the js doesnt run before the page renders 
+
+use `<script>` in html
+
+```html
+<head>
+  <title>Tracing the DOM Tree</title>
+  <script src="example.js"></script> // REFERENCES JS FILE
+  <style></style> //REFERENCES CSS when written in html file
+</head>
+```
+
+```js
+window.onload = function() {
+  function yourCode {
+  }
+}
+```
+
+**Running JS/CSS files FROM HTML**
+
+```js
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>My First Page</title>
+    <script type="text/javascript"src="example.js"></script>
+    <link rel="stylesheet" type="text/css" href="css.css">
+  </head>
+  <body>
+    <h1 class="first"> My First Page</h1>
+    <p> I will test from here.</p>
+  </body>
+</html>
+```
+
+
+
+
+
+Exercises NodeSwap
+
+```js
+window.onload = function() {
+  function nodeSwap(ind1, ind2) {
+    let child1 = document.getElementById(ind1);
+    let child2 = document.getElementById(ind2); 
+
+    if (!child1 || !child2) return undefined;
+    if (child1.contains(child2) || child2.contains(child1)) return undefined;
+    let parent1 = child1.parentNode;
+    let parent2 = child2.parentNode;
+
+    let replacer1 = document.createElement('replacer1');
+    let replacer2 = document.createElement('replacer2');
+    
+    child1.insertAdjacentElement('beforebegin', replacer1);
+    child2.insertAdjacentElement('beforebegin', replacer2);
+
+    parent1.removeChild(child1);
+    parent2.removeChild(child2);
+   
+    parent1.replaceChild(child2, replacer1);
+    parent2.replaceChild(child1, replacer2);
+  }
+  nodeSwap(1, 2);
+  nodeSwap(3, 1);
+  nodeSwap(7, 9);
+}
+```
+
+
+
+
+
+
+
+**Asynchronous Code**
+
+It's possible to write code that runs partly now, then pauses and continues to run later after a delay of milliseconds, minutes, hours, or even days. We call such code **asynchronous code**; it doesn't run continuously or even when the runtime encounters it.
+
+`setTimeout` is a glocal method that takes two arguments: a callback function and a time to wait specified in milliseconds (1/1000th of a second). It sets a timer that waits until the given time delay elapses, then invokes the callback function:
+
+```js
+setTimeout(() => {
+ console.log('!');
+}, 3000);
+
+setTimeout(() => {
+  console.log('World');
+}, 1000);
+
+console.log('Hello');
+```
+
+ensure that when we are running `setTImeout` we need to make a closure with the value bc as we increment the timer is still running 
+
+*Examples*
+
+```js
+setTimeout(() => {           //1
+  console.log('Once');       //5
+}, 1000);
+
+setTimeout(() => {           //2
+  console.log('upon');       //7
+}, 3000);
+
+setTimeout(() => {           //3
+  console.log('a');          //6
+}, 2000);
+
+setTimeout(() => {           //4
+  console.log('time');       //8
+}, 4000);
+```
+
+In what sequence does the JavaScript runtime run the functions `q`, `d`, `n`, `z`, `s`, `f`, and `g` in the following code?
+
+```js
+setTimeout(() => { (1)
+  setTimeout(() => {
+    q();
+  }, 15);
+
+  d();  
+
+  setTimeout(() => { 
+    n();
+  }, 5);
+
+  z();
+}, 10);
+
+setTimeout(() => { (2)
+  s();
+}, 20);
+
+setTimeout(() => { (3)
+  f();  (4)
+});
+
+g(); (5)
+```
+
+f, g, d, z, n, s, q. <-- my answer (wrong)
+
+g,f,d,z,n,s,q
+
+Notice that `g` still comes before `f` even though the timeout duration defaults to `0`. The reason for this behavior is that while the function can execute immediately already, it isn't until [the next event cycle that it will execute](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout).
+
+​	The time, in milliseconds that the timer should wait before the specified function or code is executed. If this parameter is omitted, a value of 0 is used, meaning execute "immediately", or more accurately, the next event cycle.
+
+Another thing of note is that `setTimeout`'s behavior can be unpredictable when the differences in duration are tiny. Consequently, the [sequence you get may be different](https://launchschool.com/posts/f4ff4ada) than the solutions.
+
+*Write a function named `afterNSeconds` that takes two arguments: a callback and a time duration in seconds. The function should wait for the indicated period, then invoke the callback function.*
+
+```js
+function afterNSeconds(callback, seconds) {
+  setTimeout(callback, seconds * 1000);
+}
+```
+
+
+
+Be careful here! It executes wonky
+
+```js
+     function logLater(num) {
+        setTimeout(() => {
+          console.log(num)
+        }, num * 1000)
+      }
+
+      function delayLog() {
+        let n = 0
+        while (n <= 10) {
+          logLater(n) 
+          n += 1
+        }
+      }
+
+      delayLog()
+```
+
+Make a closure to retain the value 
+
+With **`var`** you have a function scope, and only one shared binding for all of your loop iterations - i.e. the `i` in every setTimeout callback means **the same** variable that **finally** is equal to 6 after the loop iteration ends.
+
+With **`let`** you have a block scope and when used in the `for` loop you get a new binding for each iteration - i.e. the `i` in every setTimeout callback means **a different** variable, each of which has a different value: the first one is 0, the next one is 1 etc.
+
+https://stackoverflow.com/questions/31285911/why-let-and-var-bindings-behave-differently-using-settimeout-function
+
+
+
+**SetInterval**
+
+*Like `setTimeout`, `setInterval` is also not part of the JavaScript specification and most environments also make it available.*
+
+Another Function, `setInterval`, does something similar. Instead of invoking the callback once, though, it invokes it again and again at intervals until told to stop.
+
+In this animation, `setInterval` returns an identifier that we can later pass to `clearInterval` to cancel the timer and stop the repeated execution of the callback. `setInterval` is useful when you must run some code at regular intervals. For instance, perhaps you need to auto-save a user's work in a large web form:
+
+```js
+function save() {
+  // Send the form values to the server for safe keeping
+}
+
+// Call save() every 10 seconds
+let id = setInterval(save, 10000);
+
+// Later, perhaps after the user submits the form
+clearInterval(id);
+```
+
+Write a function named `startCounting` that logs a number to the console every second, starting with `1`. Each number should be one greater than the previous number.
+
+```js
+function startCounting() {
+  let count = 0;
+  setInterval(() => {
+    count += 1;
+    console.log(count);
+  }, 1000);
+}
+
+My Solution: 
+     function startCounting() {
+        let num = 1
+        return () => {
+          console.log(num)
+          num += 1
+        }
+      }
+
+      let counter = setInterval(startCounting(), 1000)
+      
+      function stopCounting() {
+        clearInterval(counter)
+      }
+
+      stopCounting()
+```
+
+
+
+**User Interfaces and Events**
+
+Running code after a timed delay is useful, but most user interfaces must respond to something other than the passage of time. For instance, the UI may need to take action when a button click occurs.
+
+An **event** is an object that represents some occurrence; it contains information about what happened and where it happened. The browser can trigger events as the page loads, when the user interacts with the page, and when the browser performs some action required by the program.
+
+User interfaces are inherently event-driven. An interface draws itself on the screen, and then it does nothing until a user interacts with it. That interaction could be a button-click, a finger-swipe, or even a shake of a motion-sensitive device. Such interfaces require the program to register some behavior that the event will trigger when it occurs.
+
+Since a lot of web applications consist mainly of a user interface, the code within them has two main tasks:
+
+1. Set up the user interface and display it.
+2. Handle events resulting from user or browser actions.
+
+Since we're working in the browser, we typically achieve #1 with HTML, which lets us focus on #2, handling events.
+
+In the following diagram, lines that begin with *when* describe actions the program takes in response to the appropriate event. The code that the browser runs in response to the event is an **event listener**.![User interface events example](https://d3905n0khyu9wc.cloudfront.net/images/ui_events.png)
+
+example
+
+The **`DOMContentLoaded`** event fires when the HTML document has been completely parsed, and all deferred scripts ([``](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#defer) and [``](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#module)) have downloaded and executed. It doesn't wait for other things like images, subframes, and async scripts to finish loading.
+
+**Element Handle**
+
+Element Handle **represents a remote element in the DOM of the browser**. It implements useful methods for querying and interacting with DOM elements.
+
+- Every listener in the list has three properties, **type**(of the event), **callback** (the function), and **capture** (a boolean)
+
+```
+addEventListener(type, listener)  //(event, eventHandler)
+addEventListener(type, listener, options)
+addEventListener(type, listener, useCapture)
+```
+
+```js
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <title>title</title>
+    <meta charset="UTF-8">
+    <script>
+      document.addEventListener('DOMContentLoaded', event => {
+        let addButton = document.getElementById('add');
+        let output = document.getElementById('output');
+        let count = 0;
+
+        addButton.addEventListener('click', event => {
+          count += 1;
+          output.textContent = String(count);
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <p>
+      <span id="output">0</span>
+      <button id="add">Add One</button>
+    </p>
+  </body>
+</html>
+```
+
+1. The browser loads the page and evaluates the JavaScript within the `script` tag. This code registers a callback to handle the `DOMContentLoaded` event when it **fires** (occurs) on `document`.
+2. The browser waits for an event to fire.
+3. The browser fully loads the HTML, builds the DOM, and then fires the`DOMContentLoaded` event on `document`.
+4. The browser invokes the event handler for `DOMContentLoaded`, which uses `document.getElementById` to get references to two DOM elements and initializes the variable `count`. It also registers an event listener for `click` events on `addButton`:
+5. The browser waits for an event to fire.
+6. When the user clicks the button, the `click` event fires and the browser runs the handler. The callback increments the value of `count` and updates the `textContent` of the `#output` `span`.
+7. The browser waits for an event to fire.
+
+
+
+**Page LifeCycle Events**
+
+In the previous assignment, we learned how to use an event listener to run JavaScript code when the `DOMContentLoaded` event on `document` fires:
+
+```js
+document.addEventListener('DOMContentLoaded', event => {
+  // Do something with the DOM
+});
+```
+
+![Complete page loading](https://d3905n0khyu9wc.cloudfront.net/images/complete_page_loading.png)It's common to call the moment when the DOM is ready for interaction the **DOM Ready Event**. This term is imprecise; it isn't clear what it refers to beyond the concept that the DOM is ready for use. The name became commonplace when jQuery introduced the `$.ready` method; it provides a `DOMContentLoaded` event-like functionality in older browsers that don't support that event natively or reliably.
+
+We typically use the `DOMContentLoaded` event when we have JavaScript code that must access the DOM. The `load` event fires much later, after everything on the page loads, including images, videos, etc. This `load` event is not useful in most cases because it may not occur for a long time after the page first appears.
+
+**User Events**
+
+Building an interactive web application means responding to user actions. Depending on the input device, the application, and the user, your application may need to detect and react to more than a dozen different user-initiated events:
+
+| Event Type | Example Events                                               |
+| :--------- | :----------------------------------------------------------- |
+| Keyboard   | `keydown`, `keyup`                                           |
+| Mouse      | `mouseenter`, `mouseleave`, `mousedown`, `mouseup`, `click`, 'mousemove' |
+| Touch      | `touchstart`, `touchend`, `touchmove`                        |
+| Window     | `scroll`, `resize`                                           |
+| Form       | `submit`                                                     |
+
+Complete List of Event Types: 
+
+https://developer.mozilla.org/en-US/docs/Web/Events
+
+The rest of this lesson primarily focuses on JavaScript code that uses **event listeners**, also known as **event handlers**. Event listeners are functions that the JavaScript runtime calls when a particular event occurs. There are four steps needed to setup an event handler:
+
+1. **Identify the event you need to handle.** User actions, the page lifecycle, and more can fire events.
+2. **Identify the element that will receive the event.** Depending on the event, the object could be a button, an input field, or any other element on the page.
+3. **Define a function to call when this event occurs.** The function is passed a single argument, an Event object. For now, we won't be using this argument. We'll learn more about Events later.
+4. **Register the function as an event listener.** This step brings the first three together into a working system.
+
+If all we need to know is that a click occurred, then it's easy to add some code to the handler to do what we need to do. What if we need more information about the event, though? The argument passed to the event handler provides this extra information; it's an `Event` object that provides contextual information about the event.
+
+Some useful properties that appear in Event objects include:
+
+| Property        | Description                                                  |
+| :-------------- | :----------------------------------------------------------- |
+| `type`          | The name of the event (e.g., 'click')                        |
+| `currentTarget` | The current object that the event object is on. It always refers to the element that has the event listener attached to it |
+| `target`        | The object on which the event occurred, e.g., the element clicked by the user |
+
+The following example displays the `tagName` property of the event's `target` each time a click occurs. The `target` is the HTML element that the user clicked. The example also displays the `tagName` property of the event's `currentTarget`. The `currentTarget` is the HTML element (`body`) that the event listener was attached to. Click around on the rendered example and see how the message changes in response to these clicks.
+
+```js
+document.body.addEventListener('click', event => {
+  let elementClicked = event.target;
+  let elementAttached = event.currentTarget;
+  let p = document.getElementById('message');
+  p.textContent = elementClicked.tagName;
+  let p2 = document.getElementById('message2');
+  p2.textContent = elementAttached.tagName; 
+});
+```
+
+**Mouse Events**
+
+Most events have properties specific to their type. For example, here are some of the properties available for mouse events:
+
+| Property  | Description                                                  |
+| :-------- | :----------------------------------------------------------- |
+| `button`  | This is a read-only property that indicates which button was pressed |
+| `clientX` | The horizontal position of the mouse when the event occurred |
+| `clientY` | The vertical position of the mouse when the event occurred   |
+
+Both `clientX` and `clientY` return values **relative to the visible area of the page**: the number of pixels from the upper-left corner of the browser's viewport.
+
+
+
+**Keyboard Events**
+
+Keyboard-related events also have special properties:
+
+| Property   | Description                                                  |
+| :--------- | :----------------------------------------------------------- |
+| `key`      | The string value of the pressed key. **Older browsers do not support this property** |
+| `shiftKey` | Boolean value that indicates whether the user pressed the shift key |
+| `altKey`   | Boolean value that indicates whether the user pressed the alt (or option) |
+| `ctrlKey`  | Boolean value that indicates whether the user pressed the control key |
+| `metaKey`  | Boolean value that indicates whether the user pressed the meta (or command) key |
+
+```js
+document.addEventListener('click', event => {
+  let x = document.querySelector('.x');
+  x.style.left = String(event.clientX) + 'px';
+  x.style.top = String(event.clientY) + 'px';
+});
+```
+
+```js
+document.addEventListener('mousemove', event => {
+  let x = document.querySelector('.x');
+  x.style.left = String(event.clientX) + 'px';
+  x.style.top = String(event.clientY) + 'px';
+});
+  
+document.addEventListener('keydown', event => {
+  let el = document.querySelector('div')
+ 
+  if (event.key === 'g') {
+    el.children[0].style.background = 'green';
+       el.children[1].style.background = 'green';
+  } else if (event.key === 'b') {
+        el.children[0].style.background = 'blue';
+       el.children[1].style.background = 'blue';
+  } else if (event.key === 'r') {
+        el.children[0].style.background = 'red';
+       el.children[1].style.background = 'red';
+  }
+})
+  
+```
+
+Adding a text counter to a textarea
+
+```js
+document.addEventListener('DOMContentLoaded', () => {
+  let composer = document.querySelector('.composer');
+  let textarea = composer.querySelector('textarea');
+  let counter = composer.querySelector('.counter');
+  let button = composer.querySelector('button');
+  
+  function updateCounter() {
+    let length = textarea.value.length;
+    let remaining = 140 - length;
+    let message = `${remaining.toString()} characters remaining`;
+    let invalid = remaining < 0;
+    
+    textarea.classList.toggle('invalid', invalid);
+    button.disabled = invalid;
+
+    counter.textContent = message;    
+  }
+  
+  textarea.addEventListener('keyup', updateCounter);
+  
+  updateCounter();
+});
+
+```
+
+Things to note
+
+we set attributes that define the attributes 
+
+we use `disabled` for button 
+
+we use keyup to detect a button press 
+
+everytime a button is pressed we are calling that method and getting a new value on the text area 
+
+
+
+**Capturing and Bubbling**
+
+Thus far, we've been working with events by adding handlers to elements that may be the source of events. For example, we would add an event listener to a button element. This approach results in event listeners attached to each element of interest on the page. It works fine in small applications, but there are downsides:
+
+- You can't add an event listener to an element until the DOM is ready, which means that you must wait until the `DOMContentLoaded` event fires.
+- You must add event handlers manually when you add new elements to the page after `DOMContentLoaded`fires.
+- Adding handlers to many elements can be slow, and can lead to complicated, difficult to maintain code. Imagine a page with a large spreadsheet-like grid with hundreds or thousands of cells; you must provide listeners for both keyboard and mouse events in every cell.
+
+A technique called **event delegation** provides a solution for these problems, but before we can learn how to use it, we first need to talk about **capturing** and **bubbling**. We'll discuss event delegation later in this lesson.
+
+if our event listener is on an element than everything nested is accessible 
+
+The above, described behavior, surfaces the relationship of nested elements to events. Do you notice the pattern? The number of elements you can interact with is equal to the element (the `div#elem1` element) the event listener was added to plus the number of its **"nested"** inner elements (`div#elem2`, `div#elem3` and `div#elem4` elements). 
+
+// take note that the function expression syntax is used to create the callback function
+elem2.addEventListener('click', function(event) {
+  alert(event.currentTarget.id);
+});
+
+`this` is the `currentTarget`
+
+```js
+// take note that the function expression syntax is used to create the callback function
+elem2.addEventListener('click', function(event) {
+  alert(event.currentTarget.id);
+});
+
+// is equivalent to
+elem2.addEventListener('click', function(event) {
+  alert(this.id);
+});
+```
+
+What if we put an event handler on an outer element and then another on a nested element? One event is fired if you do something to the inner element, but that one event triggers the two handlers because of **capture and bubbling**
+
+**Capturing** and **bubbling** are phases that an event goes through after it initially fires. The event first gets dispatched to the global `window` object, then to the `document` object, all the way down to the target element, which is the element on which the event was originally fired. At this point, this dispatch process reverses and from the `target` element the event works its way through containing elements until it reaches the `window` object. Using the HTML from our scenario of *"Adding the Event Listener to the Innermost and Outermost Element"*, this process looks like this:
+
+![Event capturing and bubbling](https://d3905n0khyu9wc.cloudfront.net/images/event_phases_v4.png)
+
+**Note1:** The diagram may suggest that there are many click events happening, but actually, there's just **one** `click` event. This one `click` event object moves through the capturing and bubbling phases and checks if there are any listeners for it on the DOM objects that it passes.
+
+**Note2:** The event gets dispatched to each element twice, once during the capturing phase and once during the bubbling phase. The actual event listener, though, gets called/fired in only one phase. By default the listener is set to fire during the "bubbling" phase. To set it to listen on the "capturing phase" you can use the third optional, argument, for the `addEventListener` method, `useCapture`, and set it to `true`.
+
+```js
+elem1.addEventListener('click', callbackFunction, true);
+// Notice the third argument. It's set to `true`. When it's set to true, the event listener will listen during the capturing phase. If not specified, `useCapture` defaults to `false` and the event listener listens during the bubbling phase.
+```
+
+What the capturing and bubbling mechanism implies is that events do not start and end on the target element or the element that an event was triggered on.
+
+Let's take the case of scenario 2 where we were able to interact with the child elements even though an event listener was only attached to their parent. We could interact with the child elements because when we clicked on a child element, the `click` event bubbled up — from the `target` — and passed the parent object which had a listener for it.
+
+Taking the case of scenario 3, the mechanism of capturing and bubbling also explains why there are two alert boxes when we click on the `div#elem4` element only once; the event that was triggered by clicking on the `div#elem4` element starts from the `window` object then reaches the target/`div#elem4` element — invoking/calling its event handler — and then moves back up to the `window` object — passing the parent `div#elem1` element and firing its event handler. This also shows that the click event listeners, by default, are listening on the bubbling phase because the alert box on the `div#elem1` element shows up last.
+
+*WHAT?* In this example if we put true to both then we will get the 1 alert BEFORE the 4 alert bc we are going down 
+
+```js
+window.onload = function() {
+  let elem1 = document.querySelector('#elem1');
+  let elem4 = document.querySelector('#elem4');
+  
+  elem1.addEventListener('click', event => alert(event.currentTarget.id),true);
+  elem4.addEventListener('click', event => alert(event.currentTarget.id),true);
+}
+```
+
+*How to answer questions about when things fire in the event listener*
+
+1. The `click` event listener listening on the bubbling phase that alerts the `tagName` of the `target`element listening on the `div` element (the first event handler).
+2. The `click` event listener listening on the bubbling phase that alerts the `tagName` of the `currentTarget` element listening on the `div` element (the second event handler).
+
+It is interesting to note that adding an event listener of the same type — "click" — to the same element doesn't overwrite the first one that was added.
+
+1. The `click` event listener listening on the **capturing** phase on the `div#elem1` element (the second event handler).
+2. The `click` event listener listening on the **bubbling** phase on the `div#elem1` element (the first event handler).
+
+This problem demonstrates that the [click] `event` object passes through the capturing before the bubbling phase.
+
+1. The `click` event listener listening on the bubbling phase on the `div#elem1` element that alerts the `tagName` of the target element (the second event handler).
+2. The `keypress` event listener listening on the bubbling phase on `document` that alerts the `code` of the keyboard key that was pressed (the first event handler).
+3. The `keypress` event listener listening on the bubbling phase on `document` that alerts the `code` of the keyboard key that was pressed (the first event handler).
+4. The `click` event listener listening on the bubbling phase on the `div#elem1` element that alerts the `tagName` of the target element (the second event handler).
+
+In a later assignment, we'll cover the concept that this practice problem surfaces — the event loop. For now, just note that events queue and it's the oldest one that gets processed first regardless of the type of event.
+
+**Stopping Propogation**
+
+`event.stopPropagation`stops the `event` object from continuing its path along the capturing and bubbling phases. Check out the examples below to see it in action.
+
+```js
+event.stopPropagation(); // Tells the browser to stop bubbling the event up to parents
+```
+
+
+
+**EXPLANATION OF CAPTURING AND BUBBLING**
+
+SO for this draw two lines one going down and the other going up
+
+mark your click location 
+
+Then mark all listeners upwards of that (parents)
+
+go down the arrow and then up the other arrow 
+
+
+
+**Preventing Default Behavior**
+
+Another useful method on Event objects is `preventDefault`. This method tells the browser that it shouldn't perform any actions that it might otherwise perform in response to a user's action. For instance, clicking a link typically loads a new page in the browser. `preventDefault` tells the browser not to do that. Consider the following code:
+
+```js
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('a').addEventListener('click', event => {
+    event.preventDefault();
+    alert('Following the link was prevented.');
+  });
+});
+```
+
+As described, the loading of the new page is prevented. Interestingly, though, an alert is still displayed. The takeaway here is that it is the "default behavior" — following through the new page in the `href` attribute — that is prevented and not the added event listener which contains the code for the alert.
