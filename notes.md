@@ -1103,7 +1103,7 @@ window.onload = function() {
 
 It's possible to write code that runs partly now, then pauses and continues to run later after a delay of milliseconds, minutes, hours, or even days. We call such code **asynchronous code**; it doesn't run continuously or even when the runtime encounters it.
 
-`setTimeout` is a glocal method that takes two arguments: a callback function and a time to wait specified in milliseconds (1/1000th of a second). It sets a timer that waits until the given time delay elapses, then invokes the callback function:
+`setTimeout` is a global method that takes two arguments: a callback function and a time to wait specified in milliseconds (1/1000th of a second). It sets a timer that waits until the given time delay elapses, then invokes the callback function:
 
 ```js
 setTimeout(() => {
@@ -1206,6 +1206,24 @@ Be careful here! It executes wonky
 
       delayLog()
 ```
+
+```js
+//callback with setInterval
+
+function startCounter(callback) {
+  let counter = 0;
+  const intervalId = setInterval(() => {
+    counter++;
+    if (callback(counter)) {
+      clearInterval(intervalId);
+    }
+  }, 1000);
+}
+```
+
+
+
+
 
 Make a closure to retain the value 
 
@@ -1619,3 +1637,207 @@ document.addEventListener('DOMContentLoaded', () => {
 ```
 
 As described, the loading of the new page is prevented. Interestingly, though, an alert is still displayed. The takeaway here is that it is the "default behavior" — following through the new page in the `href` attribute — that is prevented and not the added event listener which contains the code for the alert.
+
+
+The default behavior isn't for the element that the event listener is attached to, but rather for the `event` object; the anchor element's "click" event listener didn't have a `preventDefault` but a new page wasn't loaded.
+
+The browser waits for the event object to go through the propagation phases (capturing and bubbling) before it performs the default action of the event. If there's an event handler with a `preventDefault` call somewhere in the propagation path, the default behavior is skipped.
+
+SKIP OVER A preventDefault using stop probation
+
+**Event Delegation/ Event Propogation**
+
+Looping through buttons to add event handlers
+
+```js
+function clickHandler(event) {
+  let message = document.getElementById('message');
+  message.textContent = `${event.target.textContent} was clicked!`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  let buttons = document.querySelectorAll('button');
+
+  for (let index = 0; index < buttons.length; index += 1) {
+    buttons[index].addEventListener('click', clickHandler);
+  }
+});
+```
+
+Drawbacks to adding event handlers this way:
+
+- We must wait for the DOM to finish loading before adding event handlers. It isn't hard to do this, but it might introduce timing problems if we have other code that also must wait before it runs.
+- Modern web pages often add new elements after the page finishes loading. Here, we're binding the event listeners to elements that already exist when the page finishes loading. Any elements added later, though, won't have those event handlers. Instead, the developer must explicitly add listeners to new Elements as the application adds them.
+- Attaching many listeners to a document has a cost in performance and memory. For our eight buttons, this overhead is negligible, but imagine a spreadsheet application with thousands of cells, each of which needs several event handlers. We now have to register thousands of listeners, which can cause the page to "freeze" while JavaScript creates them.
+
+**Event delegation** takes advantage of event propagation to address these problems. Instead of adding listeners to every element you're watching, you can add a single handler to any common ancestor (a parent, grandparent, or something further up the DOM tree) of the elements you want to watch. The listener, in turn, performs the required actions for each element
+
+Our simple example lets us attach the single event handler directly to `document`, which means we don't have to wait until the DOM is ready. Within the handler, we can determine which DOM element triggered the event using `event.target`:
+
+```js
+document.addEventListener('click', event => {  
+  if (event.target.tagName === 'BUTTON') {
+    let message = document.getElementById('message');
+    message.textContent = `${event.target.textContent}  was clicked!`;
+  }
+```
+
+**SO** by making the eventlistener upstream it will listen to all things downstream and we can use `target` to know which one was clicked and it still listens bc it was heard upstream
+
+The trade-off of delegation is that the listener may become complicated if it must handle multiple situations. Consider the following variation of the button clicker example that uses both buttons and links. We must treat them differently, depending on which was clicked:
+
+```js
+document.addEventListener('click', event => {
+  let tag = event.target.tagName;
+  
+  if (tag === 'BUTTON') {
+    let message = document.getElementById('message');
+    message.textContent = `${event.target.textContent} was clicked!`;
+  } else if (tag === 'A') {
+    event.preventDefault();
+    event.target.classList.toggle('highlight');
+  }
+});
+```
+
+this event was listening to clicks on buttons and clicks on tags a
+
+Things to note:
+
+event listeners can specify what they want to do by the target thats clicked
+
+the default behavior of an `a` is to lead to the href but we didnt want this here so we prevented the default 
+
+it looks like the default behavior for a button is not to do that 
+
+using event.target is great for delegation!  
+
+
+
+*Downfalls of delegation*
+
+Even with merely two cases, our code is noticeably more complex, yet we only have to check the tag name and perform a simple action. In a large document, there may be many different situations; imagine the complexity that may result from even a dozen cases.
+
+*When to use it?*
+
+The best approach is to start by binding event handlers directly to elements when a project is new and small. As the code grows in size and complexity, delegation may make sense to reduce the number of event handlers required.
+
+Keep in mind that you don't need to use `document` as the delegator: you can delegate events to any common ancestor element of the elements you want to monitor. You can even have more than one element handling delegated events if it makes sense.
+
+jQuery, which we'll look at in an upcoming lesson, includes functionality that makes delegation comparatively easy while avoiding the complexity drawback.
+
+
+
+**Event loop**
+
+In all of the asynchronous code we've written so far, we've taken advantage of something called the **event loop**.
+
+Article: 
+
+https://blog.bitsrc.io/understanding-asynchronous-javascript-the-event-loop-74cd408419ff
+
+Video: 
+
+https://www.youtube.com/watch?v=8zKuNo4ay8E&embeds_referring_euri=https%3A%2F%2Flaunchschool.com%2F&source_ve_path=MA&feature=emb_rel_pause
+
+
+
+
+
+MAYBE DO A STUDY GROUP ON THIS???
+
+
+
+**Guessing Game**
+
+Things to note: 
+
+1. If you capture the whole form and use it as an event listener currentTarget then you can use the `submit` event 
+2. If you capture just the `submit` button you can use the `click` event 
+3. If you have an `input`element then you can use `value` to get the users input from that element in real time 
+4. You can use `preventDefault` in `addEventListener` to keep your program from going to the server immediately 
+
+DO BONUS NUMBER 11 later 
+
+https://launchschool.com/lessons/519eda67/assignments/afda9661
+
+
+
+
+
+**Callbacks**
+
+Callbacks are the fundamental building blocks of asynchronous programming in JavaScript. They help handle tasks that take time to complete without blocking the code execution. 
+
+- **Callbacks**: We start with the fundamental concept of callbacks, the building blocks of async JS, discussing their function and how to navigate the issues they can introduce.
+- **Promise Basics**: Next, we'll delve into promises, a cleaner and more efficient way to manage asynchronous operations, detailing their usage and the methods they offer.
+- **Error Handling**: We'll then advance to robust error handling strategies within promises to ensure our applications can gracefully deal with unexpected failures.
+- **Promise API**: After mastering single promises, we will look at how the Promise API facilitates handling multiple promises together, enabling more complex asynchronous patterns.
+- **Async / Await**: Lastly, we will cover the elegant `async` and `await` syntax, which will allow us to write asynchronous code that's as easy to read and debug as synchronous code.
+
+**Single-Thread**
+
+JavaScript is single-threaded, meaning it can only do one task at a time
+
+Callbacks help JavaScript manage asynchronous tasks like server requests, file operations, or timers by executing a task in the background and calling the function back when it's done. This way, the main program flow doesn't have to wait and can keep running.
+
+**Callback Hell/ Pyramid of doom**
+
+A lot of callbacks nested inside eachother makes it hard to read, maintain, and log
+
+```js
+getData(function (a) {
+  getMoreData(a, function (b) {
+    getMoreData(b, function (c) {
+      console.log("Got the data!");
+    });
+  });
+});
+```
+
+Solution: 
+
+1. **Modularize**: Break your functions into smaller, reusable pieces.
+2. **Use named functions**: Instead of inline anonymous functions, name your functions and reference them.
+
+```js
+function getFinalData(c) {
+  console.log("Got the data!");
+}
+
+function processMoreData(b, callback) {
+  getMoreData(b, callback);
+}
+
+function processData(callback) {
+  getData(function (a) {
+    processMoreData(a, callback);
+  });
+}
+
+processData(getFinalData);
+```
+
+**Callback limitations**
+
+- **Readability**: Deeply nested callbacks are hard to read.
+- **Error handling**: It's easy to miss errors that are not properly managed at every level of the callback chain.
+- **Control flow**: Managing the order of execution can become very challenging.
+
+
+
+**Promises**
+
+Evolution of callbacks- 
+
+ they provide a cleaner, more manageable system for handling the asynchronous nature of JavaScript.
+
+Rather than passing a callback into a function, you receive a promise object that you can attach callbacks to, without nesting them.
+
+ In JavaScript, a Promise is an object that represents an asynchronous operation that will complete at some point and produce a value.
+
+A JavaScript Promise has three states:
+
+1. **Pending**: The initial state — the operation has not completed yet.
+2. **Fulfilled**: The operation has completed successfully, and the promise has a resulting value.
+3. **Rejected**: The operation has failed, and the promise has an error.
