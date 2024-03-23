@@ -1828,6 +1828,8 @@ processData(getFinalData);
 
 **Promises**
 
+Effective error handling in promises is essential for maintaining application stability and improving user experience. Using `.catch()` allows us to deal with errors gracefully, provide fallback behaviours, and ensure that our applications handle unexpected situations without crashing.
+
 Evolution of callbacks- 
 
  they provide a cleaner, more manageable system for handling the asynchronous nature of JavaScript.
@@ -1841,3 +1843,2546 @@ A JavaScript Promise has three states:
 1. **Pending**: The initial state — the operation has not completed yet.
 2. **Fulfilled**: The operation has completed successfully, and the promise has a resulting value.
 3. **Rejected**: The operation has failed, and the promise has an error.
+
+**Creating a Promise**
+
+To create a new promise, you use the `Promise` constructor which takes a function called the "executor." This function runs automatically when the promise is created and includes the operations we want to perform. It has two function arguments, typically called `resolve` and `reject`.
+
+```js
+let myFirstPromise = new Promise((resolve, reject) => {
+  // We do something asynchronous here, and then call resolve or reject
+
+  // This is just an example condition
+  let condition = true;
+  if (condition) {
+    // This value will be passed to the .then()
+    resolve("Success!");
+  } else {
+    // This error will be passed to the .catch()
+    reject("Failure!");
+  }
+});
+```
+
+After creating a promise, you can specify what to do when it is resolved or rejected using the `.then()`, `.catch()`, and `.finally()` methods.
+
+`.then()`
+
+The `.then()` method is called when a promise is successfully fulfilled. You can pass a function that will receive the result.
+
+If the promise is rejected, the `.catch()` method catches the error. It's similar to writing a `try/catch` block in synchronous code.
+
+The `.finally()` method is a new addition that runs after the promise is settled, whether it's fulfilled or rejected. It is usually used for cleanup actions, like stopping a loading indicator regardless of the promise result.
+
+```js
+myFirstPromise.then((successMessage) => {
+  console.log("Yay! " + successMessage);
+});
+
+myFirstPromise.catch((errorMessage) => {
+  console.error("Uh oh! " + errorMessage);
+});
+
+myFirstPromise
+  .then((successMessage) => {
+    console.log("Yay! " + successMessage);
+  })
+  .catch((errorMessage) => {
+    console.error("Uh oh! " + errorMessage);
+  })
+  .finally(() => {
+    console.log("This runs no matter what.");
+  });
+```
+
+So the promise takes a function. The function takes two arguments (resolve and reject)
+
+**Chaining Promises**
+
+Promise outline
+
+```js
+let somePromise = new Promise((resolve, reject) => {
+  someCondition 
+
+  if (someCondition) {
+    resolve('message')
+  } else {
+    reject('message')
+  }
+})
+
+somePromise
+  .then((message) => {
+
+  })
+  .catch((message) => {
+
+  })
+```
+
+```js
+Promise.resolve(7)     //returns a promise object
+  .then((number) => number * 2)
+  .then((number) => number + 5)
+  .then((result) => console.log(result));
+// Logs: 19
+
+
+
+
+let flakyService = new Promise((resolve, reject) => {
+  let arr = [true]
+  let someCondition = arr[Math.floor(Math.random() * 2)] 
+
+  if (someCondition) {
+    resolve('Operation successful')
+  } else {
+    reject('Operation failed')
+  }
+}).then((message) => {
+    console.log(message)
+  }).catch((message) => {
+    console.log(message)
+  }).finally(() => {
+    console.log('you did it')
+  })
+```
+
+The return value of a promise is Promise object{{<fulfulled>: 'Operation Successful'}}. It looks like the Promise constructor function takes a function as an argument (executor) that takes two arguements that are callback functions. Those functions return Promise objects that have the then and catch and finally methods defined. 
+
+But if its unsuccessful and doesnt have a catch statement it will return an error 
+
+Uncaught (inpromise) Operation failed. Then then/catch/finally methods also return a Promise object so it can be chained. 
+
+
+
+One of the powers of promises is their ability to be chained. When you attach a `.then()`method to a promise, it also returns a new promise, which can be handled with another `.then()` or `.catch()`. This allows for cleaner asynchronous flow control.
+
+To conclude, promises are an elegant way to manage asynchronous operations in JavaScript. They make it possible to write more predictable code compared to traditional callback approaches. With the understanding of promise states and how to use `.then()`, `.catch()`, and `.finally()`, you have the foundation to control more complex asynchronous operations in your code.
+
+
+
+*Promise Based Function *
+
+```js
+function downloadFilePromise() {
+  return new Promise((resolve, reject) => {
+    let bool = true
+    
+    setTimeout(() => {
+      if (bool) {
+        resolve('Download Complete!')
+      } else {
+        reject('Did not download!')
+      }
+    }, 2000)
+
+  })
+}
+
+downloadFilePromise()
+  .then((message) => {
+  console.log(message)
+  })
+  .catch((message) => {
+    console.log(message)
+  })
+```
+
+What if we don't need any reject?
+
+```js
+function processDataPromise(numbers) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const processed = numbers.map((number) => number * 2);
+      resolve(processed);
+    }, 1000);
+  });
+}
+```
+
+
+
+MY OWN RESEARCH:
+
+```js
+class PromiseDemo {
+  constructor(cb) {
+    cb(this.resolve.bind(this), this.reject.bind(this));
+  }
+  
+  resolve(d) {
+    console.log('resolve', d);
+  }
+  
+  reject(d) {
+    console.log('reject', d);
+  }
+}
+
+new PromiseDemo((resolve, reject) => {
+  Math.random() > 0.5 ? resolve('1') : reject('1');
+});
+```
+
+
+
+The promise is an object created from a contructor. The constructor function takes one argument:
+
+function ('executor')
+
+  This function takes two arguments: 
+
+​    resolve, reject <= These two arguments are functions themselves (callbacks) provided by JS. SO we can name the parameters whatever we want and internally the first one will be this.resolve.bind(this) and the second will be 
+
+this.reject.bind(this))
+
+   
+
+So to summarize: the executor runs automatically and attempts to perform a job. When it is finished with the attempt, it calls `resolve` if it was successful or `reject`if there was an error.
+
+The `promise` object returned by the `new Promise` constructor has these internal properties:
+
+- `state` — initially `"pending"`, then changes to either `"fulfilled"` when `resolve` is called or `"rejected"` when `reject` is called.
+- `result` — initially `undefined`, then changes to `value` when `resolve(value)` is called or `error` when `reject(error)` is called.![Promise](data:image/png;base64,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)
+
+A promise that is either resolved or rejected is called “settled”, as opposed to an initially “pending” promise.
+
+**Catching Errors with `.catch()`**
+
+The `.catch()` method is your primary tool for handling errors in promises. It is best practice to place a `.catch()` method at the end of your promise chain to ensure all possible errors are caught.
+
+```js
+doSomethingAsync()
+  .then((result) => doSomethingElseAsync(result))
+  .then((newResult) => doThirdThingAsync(newResult))
+  .catch((error) => console.error("An error occurred:", error));
+```
+
+In this chain, any errors thrown in `doSomethingAsync`, `doSomethingElseAsync`, or `doThirdThingAsync` are caught by the `.catch()` at the end.
+
+The `.catch()` method does more than just log errors. It can also be used to recover from errors and return a new value or promise. This can be helpful in a situation where you want to provide a fallback value if something goes wrong.
+
+The `.finally()` method is useful for performing cleanup actions and is always called whether the promise was fulfilled or rejected. However, `.finally()` is not designed to handle errors. It is typically used for code that should execute no matter the outcome of the promise.
+
+**`then()` additional argument**
+
+it can take a second (error) argument for rejected scenarios, but if we chain it it wont be caught by all the promises error
+
+```js
+doSomethingAsync().then(
+  (result) => doSomethingElseAsync(result),
+  (error) => console.error("An error occurred:", error)
+);
+```
+
+Exercises https://launchschool.com/lessons/519eda67/assignments/5e87f026
+
+Question 3
+
+Implement a function `retryOperation` that attempts to perform an operation by calling a provided function `operationFunc`. If `operationFunc` throws an error, `retryOperation`should retry the operation up to two additional times before giving up and logging `"Operation failed"`.
+
+```js
+// Example usage:
+retryOperation(
+  () =>
+    new Promise((resolve, reject) =>
+      Math.random() > 0.33
+        ? resolve("Success!")
+        : reject(new Error("Fail!"))
+    )
+);
+```
+
+
+
+Their answer:
+
+```js
+function retryOperation(operationFunc) {
+  let attempts = 0;
+
+  function attempt() {
+    return operationFunc().catch((err) => {
+      if (attempts < 2) {
+        attempts++;
+        console.log(`Retry attempt #${attempts}`);
+        return attempt();
+      } else {
+        throw err;
+      }
+    });
+  }
+
+  return attempt().catch(() => console.error("Operation failed"));
+}
+```
+
+
+
+My answer:
+
+```js
+function retryOperation(operationFunc) {
+  let attempts = 0
+  while (attempts < 3) {
+    if (operationFunc().catch(()=>{}).state === 'rejected') {
+      operationFunc()
+      attempts += 1
+    } else {
+      return operationFunc().then((message)=> console.log(message))
+    }
+  }
+  throw err
+}
+```
+
+question 5
+
+Implement a `loadData` function that fetches data but sometimes fails. It should return a promise that either resolves with `"Data loaded"` or rejects with `"Network error"`. Use a `.catch()` block to return a recovery promise that resolves with `"Using cached data"` in case of failure.
+
+```js
+function loadData() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (Math.random() > 0.5) {
+        resolve("Data loaded");
+      } else {
+        reject("Network error");
+      }
+    }, 1000);
+  }).catch(() => {
+    console.error("An error occurred. Attempting to recover...");
+    // Return a recovery promise
+    return Promise.resolve("Using cached data");
+  });
+}
+
+loadData().then(console.log);
+// Logs "Data loaded" or "Using cached data"
+```
+
+
+
+**Promise.all()**
+
+When you have a set of asynchronous operations that you want to run in parallel and wait for all of them to complete, `Promise.all()` is the tool you need. It takes an iterable (e.g., an array) of promises and returns a single promise.
+
+The returned promise resolves when all of the input promises have resolved, or rejects as soon as one of the input promises rejects. If the returned promise resolves, it resolves with an array containing the resolve values of each promise, in the same order as the promises provided.
+
+```js
+let promise1 = Promise.resolve(3);
+let promise2 = 42;
+let promise3 = new Promise((resolve, reject) => {
+  setTimeout(resolve, 100, "foo");
+});
+
+Promise.all([promise1, promise2, promise3]).then((values) => {
+  console.log(values);
+  // expected output: Array [3, 42, "foo"]
+});
+```
+
+
+
+**Promise.race()**
+
+`Promise.race()` is similar to `Promise.all()` in that it takes an iterable of promises. However, the promise returned by `Promise.race()` settles as soon as one of the input promises settles — that means it's either fulfilled or rejected. This can be useful when you want to "race" multiple promises against each other and only care about the first one to complete.
+
+```js
+let promise1 = new Promise((resolve, reject) => {
+  setTimeout(resolve, 500, "one");
+});
+
+let promise2 = new Promise((resolve, reject) => {
+  setTimeout(resolve, 100, "two");
+});
+
+Promise.race([promise1, promise2]).then((value) => {
+  console.log(value);
+  // expected output: "two"
+});
+```
+
+
+
+things to note: the way that `setTimeout(resolve, 100, "two");` is set up. "two" is passed to `resolve`
+
+
+
+**Promise.allSettled()**
+
+`Promise.allSettled()` returns a promise that resolves after all of the given promises have either resolved or rejected, with an array of objects that each describes the outcome of each promise.
+
+This is particularly helpful when you want to know the results of all promises, regardless of whether they succeeded or not.
+
+Here, `Promise.allSettled()` lets you know that one promise was "fulfilled" and the other was "rejected".
+
+```js
+let promise1 = Promise.resolve(3);
+let promise2 = new Promise((resolve, reject) => setTimeout(reject, 100, "foo"));
+let promises = [promise1, promise2];
+
+Promise.allSettled(promises).then((results) =>
+  results.forEach((result) => console.log(result.status))
+);
+```
+
+
+
+**Promise.any()**
+
+`Promise.any()` takes an iterable of Promise objects and, as soon as one of the promises in the iterable fulfills, it returns a single promise that resolves with the value from that promise. If no promises in the iterable fulfill (if all of the given promises are rejected), then the returned promise is rejected with an `AggregateError`, a new error type that groups together individual errors.
+
+```js
+let promise1 = Promise.reject(0);
+let promise2 = new Promise((resolve) => setTimeout(resolve, 100, "quick"));
+let promise3 = new Promise((resolve) => setTimeout(resolve, 500, "slow"));
+let promises = [promise1, promise2, promise3];
+
+Promise.any(promises).then((value) => console.log(value));
+```
+
+
+
+These promise methods offer powerful ways to coordinate multiple tasks in an asynchronous environment. By leveraging `Promise.all()`, `Promise.race()`, `Promise.allSettled()`, and `Promise.any()`, you can control the flow of diverse asynchronous actions with ease, making your code more efficient and responsive.
+
+Question 5
+
+Implement a helper function `loadMultipleResources` that takes an array of URLs and fetches them using the `fetch` API. Use `Promise.allSettled()` to return an array of fetched responses, regardless of whether some URLs may lead to failure.
+
+```js
+loadMultipleResources([
+  "https://jsonplaceholder.typicode.com/todos/1",
+  "invalidUrl",
+]).then((results) => {
+  results.forEach((result) => {
+    if (result.status === "fulfilled") {
+      console.log("Fetched data:", result.value);
+    } else {
+      console.error(result.reason);
+    }
+  });
+});
+
+// Fetched data: {userId: 1, id: 1, title: 'delectus aut autem', completed: false }
+// Fetched data: Failed to fetch
+```
+
+answer:
+
+```js
+function loadMultipleResources(urls) {
+  const fetchPromises = urls.map((url) =>
+    fetch(url)
+      .then((response) => response.json())
+      .catch(() => "Failed to fetch")
+  );
+  return Promise.allSettled(fetchPromises);
+}
+```
+
+
+
+**Async/ Await**
+
+ `async` and `await` - a layer of abstraction over promises that makes asynchronous code look and behave more like synchronous code.
+
+**async Functions**
+
+The `async` keyword is added to functions to tell them to return a promise. Whether you explicitly return a promise or a value, the `async` function wraps the returned value in a promise.
+
+```js
+async function fetchData() {
+  return "data from server";
+}
+
+fetchData().then((data) => console.log(data));
+// outputs: data from server
+```
+
+Even though `fetchData()` just returns a string, because it's an `async` function, `.then()` can be used just like with a promise.
+
+
+
+**await Keyword**
+
+The `await` keyword is used inside `async` functions to pause the code on that line until the promise fulfills, then return the resulting value. With `await`, you can write asynchronous code that reads somewhat like traditional synchronous code, without blocking the main thread.
+
+```js
+async function fetchData() {
+  // The function waits here until the operation completes
+  let data = await someAsynchronousOperation();
+  console.log(data);
+  // Then logs the data
+}
+```
+
+Note that `await` is traditionally used within `async` functions to pause execution until a promise is settled. It can also be used at the top level of a module. This is an advanced topic we won't get into right now, so let's stay on track and focus on using `await` within `async` functions to manage our asynchronous code effectively.
+
+
+
+**Error Handling**
+
+```js
+async function fetchData() {
+  try {
+    let data = await someAsynchronousOperation();
+    console.log(data);
+  } catch (error) {
+    console.error("Oops, an error occurred:", error);
+  }
+}
+```
+
+The `catch` block will handle any errors that occur either in the `await` statement or in the function called.
+
+**Combining async/await with Promise Methods**
+
+The `async/await` syntax doesn't replace promise methods like `Promise.all()`. Instead, they can work together in useful ways.
+
+**Best Practices**
+
+1. Always use `await` within `async` functions.
+2. Use `try`/`catch` blocks for error management.
+3. Consider performance implications when `await`ing in a loop, as each iteration will wait for the async operation. Sometimes using `Promise.all()` is more appropriate.
+4. Be careful not to use `await` unnecessarily, as it can lead to unnecessary waiting and performance issues.
+
+The `async` and `await` keywords in JavaScript significantly simplify the process of working with promises. They bring a level of clarity and simplicity that can make your asynchronous code not just more readable but also easier to write.
+
+Armed with the knowledge of callbacks, promises, the promise API methods, and now `async/await`, you have a full toolkit to tackle any asynchronous task in JavaScript. The asynchronous patterns and best practices discussed in these assignments can help you build resilient and efficient web application
+
+**Exercises**
+
+```js
+async function asyncDownloadFile() {
+  console.log("Downloading file...");
+  const message = await new Promise((resolve) => {
+    setTimeout(() => {
+      resolve("Download complete!");
+    }, 1500);
+  });
+  console.log(message);
+}
+
+asyncDownloadFile();
+// Logs "Downloading file..." then "Download complete!"
+```
+
+```js
+async function asyncLoadData() {
+  try {
+    const message = await new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (Math.random() > 0.5) {
+          resolve("Data loaded");
+        } else {
+          reject("Network error");
+        }
+      }, 1000);
+    });
+    console.log(message);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+asyncLoadData();
+// Logs "Data loaded" or "Network error"
+```
+
+```js
+async function fetchUserProfile(userId) {
+  try {
+    const userProfile = await fetch(
+      `https://jsonplaceholder.typicode.com/users/${userId}`
+    ).then((res) => res.json());
+    console.log("User Profile", userProfile);
+  } catch (error) {
+    console.error("Error fetching profile:", error);
+  }
+
+  try {
+    const userPosts = await fetch(
+      `https://jsonplaceholder.typicode.com/users/${userId}/posts`
+    ).then((res) => res.json());
+    console.log("User Posts", userPosts);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+  }
+
+  try {
+    const userComments = await fetch(
+      `https://jsonplaceholder.typicode.com/users/${userId}/comments`
+    ).then((res) => res.json());
+    console.log("User Comments", userComments);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+  }
+}
+```
+
+# Summary
+
+1. `setTimeout(callback, delay)` invokes a function after the specified number of milliseconds.
+2. `setInterval(callback, delay)` invokes a function repeatedly in intervals of some specified number of milliseconds. `clearInterval` clears the interval and prevents future invocations of the Function.
+3. An **event** is an object that represents some occurrence and contains a variety of information about what happened and where it happened. The browser triggers some events as it loads a page and when it accomplishes some actions directed by an application. The user also triggers events when he interacts with the page.
+4. Code that must access the DOM should be invoked after the `DOMContentLoaded` event fires on `document`.
+5. User events drive most user interfaces and can result from a user interacting with the keyboard, mouse, touchscreen, window or other devices. Examples of these user events are `click`, `mouseover`, `keydown`, and `scroll`.
+6. **Event listeners** are callbacks that the browser will invoke when a matching event occurs.
+7. `element.addEventListener` registers an event listener.
+8. The Event object provides the useful properties `type`, `target`, and `currentTarget`.
+9. Keyboard events have properties like `key` (and others) that describe the keys the user pressed. Mouse events similarly provide `button`, `clientX`, and `clientY`.
+10. Events propagate in three phases: capturing, target, and bubbling.
+11. `event.preventDefault` prevents default browser behavior in response to an event. `event.stopPropagation` stops the current capturing or bubbling phase, which prevents the event from firing on containing or contained elements.
+12. **Event delegation** is a technique used to handle events triggered by multiple elements using a single event handler.
+
+SECTION 2 EXERCISES 
+
+https://launchschool.com/exercise_sets/59b16ce9
+
+Video
+
+https://www.youtube.com/watch?v=Y2Y0U-2qJMs&t=1s
+
+
+
+
+
+**HTTPie**
+
+| Option | What it does                                                 |
+| :----- | :----------------------------------------------------------- |
+| -p     | What to output: H and B for request headers and body, h and b for response headers and body |
+| -a     | Authenticate with this username:password combination         |
+| --help | View command options and documentation                       |
+
+**What is an API**
+
+Provides a way for computer systems to interact with eachother Providing functionality for use by another program.
+
+**Web API**
+
+APIs that are built with web technologies 
+
+**Provider and Consumer**
+
+- An API **provider** is the system that provides an API for other parties to use. GitHub is the *provider* of the GitHub API, and Dropbox is the *provider* of the Dropbox API.
+- An API **consumer** is the system that uses the API to accomplish some work. When you check the weather on your phone, it is running a program that is *consuming* a wea
+- ther API to retrieve forecast data.
+
+- *Web APIs* allow one system to interact with another over HTTP (just like the web).
+- The system offering the API for use by others is the *provider*.
+- The system interacting with the API to accomplish a goal is the *consumer*.
+- It is best to prefer the terms *provider* and *consumer* over *client* and *server*.
+
+**Leverage Existing Services**
+
+**APIs enable application developers to build their applications on top of a variety of other specialized systems, allowing them to focus on their actual objectives and not worry about all the complexities of every part of the system.**
+
+- APIs break down the walls between systems, allowing them to share data.
+- APIs provide an "escape hatch" enabling service users to customize the software's behavior or integrate it into other systems if required.
+- Many modern web applications provide an API that allows developers to integrate their own code with these applications, taking advantage of the services' functionality in their own apps.
+
+**Public API**
+
+Intended for consumption outside the organization that provides them. Twitter, Facebook, Instagram, and many other social media sites provide public APIs that enable third-party programs to interact with their services. This is the type of web API this book deals with.
+
+**Private API**
+
+Intended only for internal use. These APIs are subject to change at any time. The Google search page uses a private API to get a list of search suggestions to display while a user is entering search terms. Sometimes it is possible to call private APIs, but in general, doing so is a bad idea for a variety of technical, ethical, and even potentially legal reasons.
+
+Providers of public APIs can and will dictate the conditions of using their API. Just because an API is *public* doesn't mean that access will be granted to anyone, or that there aren't any rules around how the API can be used. Many APIs require consumers to have accounts with the provider's service and verify this by requiring requests to include authentication data or parameters.
+
+- **What restrictions does the API place on your use of its data?** For example, data from the Amazon Product Advertising API [is only available to Amazon Associates](https://webservices.amazon.com/paapi5/documentation/).
+- **Is the API exposing any data that could be linked back to a person?** Many social applications allow access to a user's personal information, and by accessing it, you are taking on the responsibility of keeping this information safe and secure.
+- **Does the API have rate limits, and if so, what are they?** Many APIs limit how many requests can be sent from a single user or application within a given time frame. Such restrictions can have an impact on the design of programs that interact with their APIs.
+
+Web APIs are based on the same technologies that allow websites, web browsers, and web servers to work: **HTTP**.
+
+**HTTP RESPONSE**
+
+1. Status Code 
+2. Headers
+   1. Includes Content-Type: application/json
+   2. Other common headers: https://launchschool.com/books/working_with_apis/read/http_response_headers
+3. Body
+
+
+
+- Web APIs are built on top of HTTP, the technology that makes the web work.
+- HTTP Responses have 3 main parts: status code, headers, and body.
+- The *Content-Type* header describes the format of the response body.
+
+
+
+**URI- Uniform Resource Identifier**
+
+A name used to identify a resource **The resources represented by URIs can be anywhere.**
+
+**URL**, or **uniform resource locator**, is a reference to a web resource that specifies its location on a computer network and a mechanism for retrieving it.
+
+URIs are like social security numbers: every US citizen has a unique number, and as a result, these numbers could be used to reference specific individuals in a computer system (and in fact, they often are used for exactly this purpose in the medical and health insurance industry). But if you needed to have a face to face conversation with a person, just knowing their social security number would do little to tell you where to find them.
+
+URLs, on the other hand, are like street addresses. Given the street address of a person, it is possible to actually find and interact with that person. These identifiers also uniquely identify a resource, which means that a URL is a kind of URI.
+
+URLs also include *how* to access the resource. All the URLs we will be working with in this book (and that you'll work with on most projects) begin with *http://* or *https://*, which signify the resource can be accessed using the HTTP protocol. When the scheme is *https://*, it is an HTTP connection over a secure connection. **if you are working with resources on the internet, just use URL.**
+
+- A **scheme**, such as *http*
+
+- *://*, a colon and two slashes
+
+- A **hostname**, usually a domain name such as *blogs.com*
+
+- An optional colon and **port**, such as *:81*
+
+- The **path** to the resource, such as */api/v1/pages/1*
+
+- An optional **query string**, such as *?query=term*
+
+  *Summary*
+
+- Working with web APIs involves working with *URLs*.
+- URLs represent *where* a resource is and *how* it can be accessed.
+- URLs typically contain a *scheme*, *hostname*, *path*, and sometimes a *query string*.
+- Paths (and URLs) can include *placeholders* when they are written generically.
+
+
+
+**Media Types**
+
+HTML is one of many different **media types** (also called **content types** or sometimes **MIME types**) supported by modern web browsers. It is represented in an HTTP response as the `Content-Type` header as `text/html`:
+
+`Content-Type: text/html; charset=UTF-8`
+
+The `charset` (or character set) tells the browser which set of characters the response is using. The charset for most requests will be `UTF-8` or `ISO-8859-1`.
+
+Other media types include `text/plain` for plain text responses, `text/css` for CSS stylesheets, `application/javascript` for JavaScript files, and many, many more. There are media types for PDF documents, sound files, videos, ZIP archives, and [many, many, more](https://en.wikipedia.org/wiki/Internet_media_type#List_of_common_media_types).
+
+
+
+**Data Serialization**
+
+A **data serialization format** describes a way for programs to convert data into a form which is more easily or efficiently stored or transferred
+
+
+
+**XML**
+
+**XML** (or **extensible markup language**) shares common heritage with HTML: they are both based on an earlier and similar type of markup, SGML
+
+More struct than HTML and used in older apps 
+
+
+
+**JSON**
+
+**JSON** (or **JavaScript Object Notation**) is perhaps the most popular data serialization format used by web APIs today.  JSON (JavaScript Object Notation) is a popular data serialization format used by APIs. It's used by programs written in different languages to  exchange arrays, objects, strings, numbers, and boolean values over the  network.
+
+
+
+ex/ 
+
+```JSON
+{
+  "object": {
+  	"city": "Boston"
+  },
+  "array": [1, 1, 2, 3, 5],
+  "string": "Hello, World!",
+  "number": 8675.309
+}
+```
+
+- *Media types* describe the format of a response's body.
+- Media types are represented in an HTTP response's `Content-Type` header, and as a result, are sometimes referred to as *content types*.
+- *Data serialization* provides a common way for systems to pass data to each other, with a guarantee that each system will be able to understand the data.
+- JSON is the most popular media type for web APIs and the one this book will focus on.
+
+**REST**
+
+The term *REST* is often used to describe a set of conventions for how to build APIs. **REST** stands for **representational state transfer**, and it was originally defined by Roy Fielding in his [doctoral dissertation](https://www.ics.uci.edu/~fielding/pubs/dissertation/rest_arch_style.htm) in 2000. Let's take this term apart:
+
+- *representational* refers to how a representation of a resource is being transferred, and not the resource itself.
+- *state transfer* refers to how HTTP is a *stateless* protocol. This means that servers don't know anything at all about the clients, and that everything the server needs to process the request (the state) is included in the request itself.
+
+Loading web pages, submitting forms, and using links to find related content all factor into what REST is and how it applies to the web and API design. If you think about the web page as being a *resource* this makes a little more sense.
+
+- HTML forms must be loaded before they can be submitted. APIs don't have forms, so this initial GET request is unnecessary.
+- HTML forms only support two of the many HTTP methods, *GET* and *POST*. APIs are able to take advantage of all HTTP methods, which helps clarify the purpose of API requests.
+
+A good way to think about REST is as a way to define everything you might want to do with two values, *what* and *how*:
+
+- *What*: Which resource is being acted upon?
+- *How*: How are we changing / interacting with the resource?
+
+**CRUD**
+
+**CRUD** is an acronym that is used to describe the four actions that can be taken upon resources:
+
+- **C**reate
+- **R**ead
+- **U**pdate
+- **D**elete
+
+RESTful APIs will model most functionality by matching one of these operations to the appropriate resource. As an example, the following table contains the same actions as the previous one, only this time, the HTML-form driven actions have been converted into operations that could be performed with an API. Each action has been mapped to the appropriate element of CRUD.
+
+While web forms are limited by what HTTP methods are supported by the HTML spec and web browser implementations, APIs have far fewer limitations. As a result, web APIs tend to more fully embrace the concepts of HTTP. The development of APIs also moves much faster than the world of HTML rendering since compatibility is ensured by using HTTP, leading to much faster adoption of new ideas and specifications.
+
+The ability of APIs to more fully adopt HTTP manifests itself in API as the use of HTTP methods beyond GET and POST. Instead of using POST with a parameter `_method=delete` to remove a profile, the DELETE HTTP method is used. Updating a resource is done via PUT instead of POST. There are a few other HTTP methods used by some APIs, but GET, POST, PUT, and DELETE provide a method for each CRUD action.
+
+| Objective                           | How         | What     |                     |               |
+| :---------------------------------- | :---------- | :------- | :------------------ | ------------- |
+| Operation                           | HTTP Method | Resource | Path                |               |
+| Get the information about a profile | Read        | GET      | Profile             | /profiles/:id |
+| Add a profile to the system         | Create      | POST     | Profiles Collection | /profiles     |
+| Make a change to a profile          | Update      | PUT      | Profile             | /profiles/:id |
+| Remove a profile from the system    | Delete      | DELETE   | Profile             | /profiles/:id |
+
+**A RESTful API Template**
+
+Here is one more table, only this time it is a template for **any resource**. That's right- any resource at all! Profiles, products, ingredients, automobiles, flights, money transfers, payments... anything.
+
+We'll use *$RESOURCE* to represent the specific resource in this table.
+
+| Objective                             | How         | What     |                       |                 |
+| :------------------------------------ | :---------- | :------- | :-------------------- | --------------- |
+| Operation                             | HTTP Method | Resource | Path                  |                 |
+| Get the information about a $RESOURCE | Read        | GET      | $RESOURCE             | /$RESOURCEs/:id |
+| Add a $RESOURCE to the system         | Create      | POST     | $RESOURCEs Collection | /$RESOURCEs     |
+| Make a change to a $RESOURCE          | Update      | PUT      | $RESOURCE             | /$RESOURCEs/:id |
+| Remove a $RESOURCE from the system    | Delete      | DELETE   | $RESOURCE             | /$RESOURCEs/:id |
+
+By following REST conventions, most of the decisions a designer has to make turn into: *What resources will be exposed*? API consumers mostly need to ask: *what resource will allow me to achieve my goal*?
+
+A RESTful design is one in which any action a user needs to make can be accomplished using CRUD operations on one or many resources.
+
+Since the only actions that can be taken on a resource are create, read, update, and delete, the creative side of RESTful design lies in what resources are exposed to allow users to accomplish their goals. The limitation of only choosing the resources and their relationship can feel sort of similar to designing a database schema, in that the same basic CRUD actions apply to rows in a database table.
+
+**Resource Oriented Thinking**
+
+| bjective                                     | How         | What     | Attributes |                  |                                           |
+| :------------------------------------------- | :---------- | :------- | :--------- | ---------------- | ----------------------------------------- |
+| Operation                                    | HTTP Method | Resource | Path       |                  |                                           |
+| Rate a book                                  | Create      | POST     | Rating     | /ratings         | book_id, rating                           |
+| Transfer money                               | Create      | POST     | Transfer   | /transfers       | from_acct_id, to_acct_id, amount          |
+| Update a mailing address                     | Update      | PUT      | Address    | /addresses/:id   | street, city, state, postal_code, country |
+| Unfriend someone on a social site            | Delete      | DELETE   | Friendship | /friendships/:id | -                                         |
+| Fetch a list of movie showtimes              | Read        | GET      | Showings   | /showings        | -                                         |
+| Change the quantity of a product in an order | Update      | PUT      | LineItem   | /line_items/:id  | item_id, quantity                         |
+
+This is what is called a **singular resource** or **singleton resource**. Paths and URLs for singular resources identify a single resource. 
+
+It is important to remember that REST is a set of conventions and patterns for building APIs. It is more of a proven way to handle common situations than a workable solution for all possible problems
+
+
+
+- *REST* is a set of conventions about how to build APIs.
+- RESTful APIs consist of CRUD actions on a resource
+- By limiting actions to CRUD, REST requires thinking in a *resource-oriented way*.
+- It is worth being as RESTful as possible, but there are times when it is not the best solution.
+
+**What is a resource?**
+
+A representation of some grouping of data
+
+A resource can be anything an API user needs to interact with.
+
+Every resource in a web API must have a unique URL that can be used to identify and access it.
+
+**Fetching a collection**
+
+```js
+[
+    {
+        "id": 1,
+        "name": "Red Pen",
+        "price": 100,
+        "sku": "redp100"
+    },
+    {
+        "id": 2,
+        "name": "Blue Pen",
+        "price": 100,
+        "sku": "blup100"
+    },
+    {
+        "id": 3,
+        "name": "Black Pen",
+        "price": 100,
+        "sku": "blap100"
+    }
+]
+
+```
+
+This response is very similar to the previous one for a single resource:
+
+- The *media type* is *application/json*.
+- The *status* is *200 OK*.
+- The *body* is in *JSON* format.
+
+A closer look at the content of the response, however, shows that  data for three products has been returned. The JSON body of this  response is a representation of a **collection** resource. When deserialized in a programming environment, the body of the response will be an array containing 3 objects.
+
+**Elements and Collections**
+
+There are two types of resources involved in the use of RESTful APIs: elements and collections.
+
+**Elements** are the representation of a single resource,  such as the first request above. Operations that involve a single  resource are done in the context of that resource, and will use that  resource's path. deserialized in programming environment as an object
+
+**Collections** represent a grouping of elements of the  same type. It is common for collection and element resources to have a  parent-child relationship, where the collection is the "parent" and an  element is a "child", although this is not always the case. Here is what could be the path to a collection of blog posts:
+
+
+
+You can identify what kind of resource- element or collection- by the path or the API docs.
+
+Signs a URL is for a collection:
+
+1. The path ends in a plural word, such as *example.com/products*
+2. The response body contains multiple elements
+
+Signs a URL is for a single element:
+
+1. The path ends in a plural word, a slash, and then what could be an identifier (which could be numeric or alphabetic)
+2. The response body contains a single element
+
+## 
+
+- APIs provide access to single resources (**elements**) or groups of resources (**collections**).
+- The path for an element is usually the path for its collection, plus an identifier for that resource.
+
+**Example of a request**
+
+```js
+chelseaoconnor@Chelseas-Air ~ % http --print H GET https://codeexample-1832df66d33e.herokuapp.com/v1/products/1
+GET /v1/products/1 HTTP/1.1
+Accept: */*
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+Host: codeexample-1832df66d33e.herokuapp.com
+User-Agent: HTTPie/3.2.2
+```
+
+- *GET* is the HTTP method for the request. The client wants the server to return a representation of the resource.
+- */v1/products/1* is the path to a specific resource.
+- *HTTP/1.1* is the protocol version being used. Nearly all modern servers and clients support at least this version of HTTP.
+- The **Accept Header** specifies what media types the client will accept in response to this request. **/** means that the client will accept any media type in a response. The web store server returns JSON by default, so requests like the previous one would probably be OK to use. However, it is better to be in the habit  of crafting more explicit requests. Accept: */*
+
+What we want to do is tell the server to return JSON to us. We can do  that by specifying a media type in the request's accept header. We want to get a response in JSON format, and recall that the media type for  JSON is *application/json*: Accept:application/json
+
+- HTTP requests include a path, method, headers, and body.
+- The **Accept** header tells the provider what media types can be used to respond to the request.
+
+**HTTP Request Side Effects**
+
+As a result, even though making GET requests is generally considered  "safe" in that no data is being explicitly altered on the remote end, it is always worth considering what effects the requests you make could be having on the remote system. (There **can**, however, be other side effects. One example of this is a simple hit counter that increments each time a page is loaded. )
+
+
+
+**Creating a Resource**
+
+Making changes to the resources presented by the server is often the purpose of a program. 
+
+ This can be thought of as whether the API usage is "read only", which  can be accomplished with GET requests, or "read and write", which will  require the use of other request types such as POST, PUT, or DELETE. 
+
+Let's say we want to add a new product to the web store system using its API. This can be done with a single POST request.
+
+```js
+$ http -a admin:password POST book-example.herokuapp.com/v1/products name="Purple Pen" sku="purp100" price=100
+HTTP/1.1 201 Created
+Connection: close
+Content-Length: 56
+Content-Type: application/json
+Date: Tue, 23 Sep 2014 18:15:23 GMT
+Status: 201 Created
+
+{
+    "id": 4,
+    "name": "Purple Pen",
+    "price": 100,
+    "sku": "purp100"
+}
+```
+
+- The **media type** is *application/json*.
+- The **status** is *201 Created*, which we haven't seen before. Since the code is in the *2xx* format, we know this is a successful response. *201 Created* means the request was successful and that it resulted in the creation of a new resource.
+- The **body** is in *JSON* format. The data looks similar to the data we saw previously, but the values reflect the  parameters we sent to the server as a part of the most recent request.
+
+**Handling Errors**
+
+HTTP requests don't always complete successfully. A failure can be due  to a request being incomplete or containing an invalid value, a problem  on the server, or even a network connection disruption.
+
+When working with APIs, it is common to use the status code to determine at a high level if a request was successful or not. Depending on the  outcome, the response body can be inspected for additional clues as  needed.
+
+*Missing or invalid Parameters*
+
+Most systems have a set of requirements that must be met to allow the creation of resources. These kind of restrictions, or **validations**, are used to ensure all data in the system is valid and complete.  The web store server validates the values provided when creating a product resource using its API. 
+
+*Missing Resources*
+
+A very common error is attempting to access a resource that doesn't exist. The corresponding HTTP status code for this error is *404 Not Found*. 
+
+- The resource might not actually exist. It could have been deleted or perhaps it was never there in the first place. Verify that any  parameters in the request are correct, especially identifiers.
+- The URL could be incorrect. APIs can have a variety of different URL schemes, from the simple and short to the long and complex. Be sure to  look in the documentation for the API you are working with to see what  hosts and paths to use. Keep in mind that services with different  environments for testing and production will often have a unique URL for each environment.
+- Accessing the requested resource may require authentication. In an  ideal world, these errors would use a more accurate HTTP status code of *401* or *403*, but for security reasons, it is sometimes better to only expose the  existence of a resource to those who are authorized to access it.
+
+*Authentication*
+
+We briefly worked with authentication earlier in this chapter while  creating a product. Many systems require authentication on some or all  of their APIs. For the most part, missing authentication credentials  will receive `401`, `403`, or `404` errors, and can be resolved by sending valid credentials.
+
+*Incorrect Media Type*
+
+There are multiple ways to send parameters along with a web request.  Since JSON has emerged as the most common format for API requests and  responses in newly released APIs, HTTPie automatically converts any  parameters into JSON when sending a request. HTTPie doesn't print out  the request by default, but we can change this behavior and see what is  going on.
+
+HTTPie can print out the entire request using the `--print` flag. A value of `HBhb` tells HTTPie to print out the headers and body for both the request and response:
+
+*Rate Limiting*
+
+Making a request to an API server requires the receiving system to do some work in order to return a response. Just as it is easy to write a simple loop in a programming language that does something thousands of times in just a few seconds, it is just as  easy to make thousands of requests to a remote API in an equally short  period of time. Since many APIs have to support many users at the same  time, the possibility of there being too many requests to handle becomes extremely likely.
+
+Most APIs address these by enforcing **rate limiting**.  This means that each API consumer is allotted a certain number of  requests within a specified amount of time. Any requests made beyond  these limits are sent an error response and not processed further. The  status code of responses to rate limited requests varies by service, but it is often *403 Forbidden*.
+
+When encountering these rate-limiting errors, it is often enough to  simply perform the request less often. If the same request is being made over and over, the response can be stored locally to reduce the number  of requests being made.
+
+*Server Errors*
+
+The errors we've looked at so far are all in the format *4xx*, and they can all be described at a high level as *client errors*. They are the result of the client doing something in a way that is  incompatible with the server. It is also possible for errors to occur on the server that are not a direct result of anything a client does.  These errors will be in the format *5xx*, and have many potential causes, such as:
+
+- A bug or oversight in the server implementation. Sometimes these can result from the correct and intended usage of an API.
+- A hardware or other infrastructure problem with the remote system.
+- Any other error that was not foreseen by the remote server implementors.
+- Some APIs even return *5xx* errors when a specific client error would be more accurate and useful.
+- Unlike client errors, resolving a server error is usually not useful as  an API consumer. Since server errors can be intermittent, simply  retrying the request after a bit of time is often worth attempting. If  the server errors continue, though, it is best to stop making requests  until the remote system has been fixed. Continuing to make requests to a remote system returning errors can worsen many problems and should be  avoided.
+
+
+
+- Resources can be created with POST requests.
+- Requests should include all required parameters and use the proper media type.
+- Responses to failed requests will often contain information about the cause of the failure.
+
+
+
+**Updating a Resource**
+
+Suppose we have just found out the price for one of the products in the system (*Purple Pen 2.0*) is too low. We need to update this product's price to $1.50. While  we're at it, we need to also change the name to be more eye catching to  drive up sales.
+
+It looks like the product that needs to be updated has an `id` of `5`. Making a change to this product is going to be very similar to creating a product, with two main differences:
+
+- Using *PUT* as the HTTP method instead of *POST*
+- Using the product's path instead of the product collection path (e.g. */products/1* instead of */products*)
+- **PUT** is the correct HTTP method for updating the value  of a resource and sending all of its values back to the server. PUT  tells the server to *put this resource in this place*. According  to the HTTP spec, PUT requests must take a complete representation of  the resource being updated. This means that if a parameter was required  to create the resource, it is required to be sent in any PUT requests  modifying that resource. This also means that any parameter left out of a PUT request is assumed to have an empty value (usually null or nil).  Most APIs don't strictly follow this requirement, however, and provide a much simpler behavior by updating any parameters sent in a PUT request, and not modifying any other parameters that are already on the  resource. 
+
+```js
+$ http -a PUT book-example.herokuapp.com/v1/products/5 Authorization:"token AUTH_TOKEN" price=150
+HTTP/1.1 200 OK
+Connection: close
+Content-Length: 60
+Content-Type: application/json
+Date: Thu, 02 Oct 2014 05:41:07 GMT
+Status: 200 OK
+
+{
+    "id": 5,
+    "name": "Purple Pen 2.0",
+    "price": 150,
+    "sku": "purp101"
+}
+```
+
+**Deleting a Resource**
+
+Now that the updates have been made to the `New and Improved Purple Pen`, it is time to remove the older product `Purple Pen` from our system. Deleting a resource is very similar to fetching a resource, with one difference: Using the **DELETE** HTTP method instead of *GET*. Otherwise, everything else should look very familiar. On the web store  API, delete requests need to be authenticated, so those arguments to `http` should be included
+
+`204 No Content` is in the format *2xx*, which means the request was processed successfully. `204 No Content` is commonly used when it doesn't make sense to return anything in the  response body, and deleting a resource is one such case. If there is no  longer a resource at the path being accessed, there isn't anything to  send back.
+
+- Use HTTP method **PUT** to update resources.
+- Use HTTP method **DELETE** to delete resources.
+
+
+
+**Steps when deciding to work with an API**
+
+- What *protocol*, *host* and *path* (basically, what *URL*) will provide access to the appropriate resource?
+- What parameters do I need to include in the request?
+- Is authentication required?
+
+**OAuth**
+
+OAuth is a complicated system that provides a way for users to grant  access to third party applications without revealing their credentials. he end result of this is an *access token* and an *access token secret*, which, when combined with an *application key* and *application secret* belonging to the requesting application, provide enough information to  build a request using a somewhat involved list of steps we won't get  into here. You can think of the *application key* and *application secret* as the application's username and password, and the *access token* and *access token secret* as the username and password belonging to an individual user. These  values are used for different purposes, but ultimately you need all four values to make requests.
+
+**Common Response Headers**
+
+https://launchschool.com/books/working_with_apis/read/http_response_headers
+
+
+
+**Network Programming in Javascript**
+
+- When the user clicks a link, the web browser automatically requests the page.
+
+- When the browser receives a response, it renders it in the viewport.
+
+  Developers need different methods to work around it; they need a way to replace only part of the page. That new technique is **AJAX**: **A**synchronous **J**avaScript **A**nd **X**ML. AJAX gained popularity for its ability to fetch data, typically HTML or XML, and update parts of a page. 
+
+
+
+**AJAX**
+
+HTTP request from a web browser that *does not perform a full page load.*
+
+-   AJAX lets us use all HTTP methods, not just `GET` and `POST` -- the HTML `form` tag only allows `GET` and `POST` as the method.
+-   AJAX gives us a fine-grained control over the headers and  data-format of our request. In particular, we can often request data in  HTML format, JSON format, or XML format. This is sometimes not possible  with a purely HTML-based form.
+- The web browser doesn't make an automatic HTTP request; instead, JavaScript code initiates it, typically from an event listener.
+- When the browser receives a response, JavaScript code *optionally* takes the response's body and updates the page as needed. Note that the JavaScript code is free to ignore the response.
+- **To summarize: when requesting a resource using JavaScript, the  developer must write code that initiates the request and then optionally handles the response.**
+
+One popular use case for AJAX is to display some pertinent information  in a popup when the user hovers the mouse pointer over certain words:
+
+![AJAX Flow (using hover popup)](https://d3905n0khyu9wc.cloudfront.net/images/xhr_loading.png)
+
+Another use case arises when a large page contains a form. When a user  submits such a form with validation errors, rather than reloading the  entire page and losing the user's scroll position, we can send the form  request asynchronously with AJAX, and update only the form to show  relevant error messages. The technique provides a better user  experience.
+
+**Single Page Applications**
+
+Some modern applications fetch data in a serialized format and create  the DOM entirely from JavaScript running in a client's browser. We call  these applications *single page applications* since they often  run entirely within a single HTML page. Instead of fetching bits of HTML generated by a server, this model does all interactions by passing data to and from the server, often encoded as JSON.
+
+
+
+**Making a Request with XMLHttpRequest**
+
+Use the `XMLHttpRequest` object to send a HTTP request with JavaScript. This object is part of the browser API, not the JavaScript language.
+
+Today, we use this object to load any data (typically HTML or JSON) and can use other protocols (including `file://`) as well.
+
+```js
+var request = new XMLHttpRequest();
+
+request.send();
+after load event fires
+
+request.status » 200
+
+request.statusText » OK
+
+request.responseText » This is a 200 response.
+
+request.readyState » 4
+
+request.getResponseHeader('Content-Type') » text/plain; charset=utf-8
+```
+
+To send a request, we must provide the same parameters we would use when sending an HTTP request from any other language or tool: a *method*, a *host*, and a *path*.
+
+```js
+let request = new XMLHttpRequest(); // Instantiate new XMLHttpRequest object
+request.open('GET', '/path');       // Set HTTP method and URL on request
+request.send();                     // Send request
+```
+
+The request object has some interesting properties. Before the request  completes, though, those properties contain empty string or `0`:
+
+```js
+let request = new XMLHttpRequest();
+request.open('GET', '/path');
+request.send();
+
+request.responseText;                       // => ""
+request.status;                             // => 0
+request.statusText;                         // => ""
+```
+
+Once request completes:
+
+```js
+request.responseText;                       // body of response
+request.status;                             // status code of response
+request.statusText;                         // status text from response
+
+request.getResponseHeader('Content-Type');  // response header
+```
+
+Note that `request.send` is asynchronous, meaning that code execution continues without waiting for it to complete. The `XMLHttpRequest` object uses event listeners to send notifications when the request  completes and provides access to the response returned by the remote  system. Here, we'll wait for the response to load by listening for the `load` event:
+
+```js
+request.addEventListener('load', event => {
+  var request = event.target;                 // the XMLHttpRequest object
+
+  request.responseText;                       // body of response
+  request.status;                             // status code
+  request.statusText;                         // status text from response
+
+  request.getResponseHeader('Content-Type');  // response header
+});
+```
+
+You may sometimes see code where `request.open` receives a third argument, either `true` or `false`. This argument specifies whether the method should make a synchronous or asynchronous request. Since you should never make synchronous requests  from JavaScript, most contemporary browsers deprecate them, which  suggests that you should always use `true` as the third argument. Since the argument defaults to `true`, you can omit it from most code.
+
+**XMLHttpRequest Methods**
+
+| Method                            | Description                                        |
+| --------------------------------- | -------------------------------------------------- |
+| `open(method, url)`               | Open a connection to `url` using `method`.         |
+| `send(data)`                      | Send the request, optionally sending along `data`. |
+| `setRequestHeader(header, value)` | Set HTTP `header` to `value`.                      |
+| `abort()`                         | Cancel an active request.                          |
+| `getResponseHeader(header)`       | Return the response's value for `header`.          |
+
+You should also become familiar with the following `XMLHttpRequest` properties:
+
+| Property       | Writable | Default Value | Description                                                  |
+| -------------- | -------- | ------------- | ------------------------------------------------------------ |
+| `timeout`      | Yes      | `0`           | Maximum time a request can take to complete (in milliseconds) |
+| `readyState`   | No       |               | What state the request is in                                 |
+| `responseText` | No       | `null`        | Raw text of the response's body.                             |
+| `response`     | No       | `null`        | Parsed content of response, *not meaningful in all situations* |
+
+**XMLHttpRequest Events**
+
+To run some code when an event occurs on an `XMLHttpRequest` object, we can use the same `addEventListener` method that we used for handling user or page events:
+
+```js
+let request = new XMLHttpRequest();
+
+request.addEventListener('load', event => {
+  let xhr = event.target;   // the request is available as event.target
+                            // if you can't access it from an outer scope.
+});
+```
+
+Two main events fire during an `XMLHttpRequest` cycle: one when it sends the request, and one when response loading ends.
+
+| Event       | Fires When...                                                |
+| ----------- | ------------------------------------------------------------ |
+| `loadstart` | Request sent to server                                       |
+| `loadend`   | Response loading done and all other events have fired. Last event to fire. |
+
+Before `loadend` triggers, another event will fire based on whether the request succeeded:
+
+| Events    | Fires when...                                              |
+| --------- | ---------------------------------------------------------- |
+| `load`    | A complete response loaded                                 |
+| `abort`   | The request was interrupted before it could complete       |
+| `error`   | An error occurred                                          |
+| `timeout` | A response wasn't received before the timeout period ended |
+
+![XMLHttpRequest lifecycle events](https://d3905n0khyu9wc.cloudfront.net/images/220_xhr_main_events.png)
+
+Keep in mind that the browser considers any request that receives a  complete response as successful, even if the response has a non-200  status code or represents an application error.  **Whether `load` or another event fires is determined by whether the HTTP  request-response cycle loads a complete response. It does not consider  the response's semantic meaning to the application.**
+
+It is the responsibility of the application code to determine whether a `request` was successful from its perspective by inspecting the response within a `load` event handler.
+
+*Media Types*
+
+three common media types of HTML, XML, and JSON  used for response's body
+
+The content of most requests will use a format and media type that works well for representing hierarchical data. These formats are known as data serialization formats.
+
+**Request Serialization Formats**
+
+JavaScript applications that run in a web browser must *serialize* data when communicating with remote systems. Serialization lets both  the client and server transfer data in a format that preserves  information. Applications can use any *data serialization format* that both the client and server know how to read and write.
+
+**Query String/ URL encoding**
+
+Many web applications use a serialization format that you've already  seen and used: URL encoding for query strings. A query string consists  of one or more `name=value` pairs separated by the `&` character. This format is easy to use and understand, though the  presence of non-alphanumeric characters in the names or values can  complicate matters. You must encode those characters. For example, you  can encode spaces in a query string as either `%20` or `+`.
+
+```js
+# without encodeURIComponent
+title=Do Androids Dream of Electric Sheep?&year=1968
+
+# with encodeURIComponent
+encodeURIComponent('Do Androids Dream of Electric Sheep?&year=1968')
+'Do%20Androids%20Dream%20of%20Electric%20Sheep%3F%26year%3D1968'
+
+title=Do%20Androids%20Dream%20of%20Electric%20Sheep%3F&year=1968
+```
+
+Once you have a properly encoded query string, you can append it to a GET request's path:
+
+URL encoding also works with POST requests, but you must include a `Content-Type` header with a value of `application/x-www-form-urlencoded` in that case. Place the encoded name-value string in the request body.
+
+```js
+POST /path HTTP/1.1
+Host: example.test
+Content-Length: 54
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+Accept: */*
+
+title=Do%20Androids%20Dream%20of%20Electric%20Sheep%3F&year=1968
+```
+
+**Multipart Forms**
+
+POST requests use multipart form formats for forms that include file uploads or that use `FormData` objects to collect data. This format isn't strictly an encoding format  since we don't encode anything. Instead, we place each name-value pair  in a separate section of the request body. A **boundary delimiter** defined by the `Content-Type` request header separates each part:
+
+```js
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundarywDbHM6i57QWyAWro
+```
+
+Below is an entire POST request that uses multipart form data. Notice  how each parameter is in a separate part of the request body, with the  boundary delimiter before each section, and after the last section. The `Content-Type` header also sets `multipart/form-data` and specifies the boundary delimiter:
+
+```js
+POST /path HTTP/1.1
+Host: example.test
+Content-Length: 267
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundarywDbHM6i57QWyAWro
+Accept: */*
+
+------WebKitFormBoundarywDbHM6i57QWyAWro
+Content-Disposition: form-data; name="title"
+
+Do Androids Dream of Electric Sheep?
+------WebKitFormBoundarywDbHM6i57QWyAWro
+Content-Disposition: form-data; name="year"
+
+1968
+------WebKitFormBoundarywDbHM6i57QWyAWro--
+```
+
+Note that the final boundary delimiter has an extra `--` at the end; these characters mark the end of the multipart content.
+
+A `GET` request can return JSON, you may then use `POST` to send JSON data to the server. Here we make our request using JSON format:
+
+```js
+POST /path HTTP/1.1
+Host: example.test
+Content-Length: 62
+Content-Type: application/json; charset=utf-8
+Accept: */*
+
+{"title":"Do Androids Dream of Electric Sheep?","year":"1968"}
+```
+
+Note that the `Content-Type` header has a value of `application/json; charset=utf-8`. This is required if you want to use JSON as the request serialization  format. The server may not parse the request correctly if this header  has the wrong value.
+
+**Loading HTML via XHR**
+
+```html
+<h1>Existing Page</h1>
+
+<div id="store"></div>
+```
+
+```js
+document.addEventListener("DOMContentLoaded", () => {
+  let request = new XMLHttpRequest();
+  request.open("GET", "https://ls-230-web-store-demo.herokuapp.com/products");
+
+  request.addEventListener("load", event => {
+    let store = document.getElementById("store");
+    store.innerHTML = request.response;
+  });
+
+  request.send();
+});
+```
+
+But say we click on one of the links within the store on our page.. that will not render correctly bc we don't have an event listener on those links
+
+```js
+document.addEventListener("DOMContentLoaded", () => {
+  let store = document.getElementById("store");
+
+  let request = new XMLHttpRequest();
+  request.open("GET", "https://ls-230-web-store-demo.herokuapp.com/products");
+
+  request.addEventListener("load", event => (store.innerHTML = request.response));
+  request.send();
+
+  store.addEventListener("click", event => {
+    let target = event.target;
+    if (target.tagName !== "A") {
+      return;
+    }
+
+    event.preventDefault();
+
+    let request = new XMLHttpRequest();
+    request.open(
+      "GET",
+      "https://ls-230-web-store-demo.herokuapp.com" + target.getAttribute("href")
+    );
+
+    request.addEventListener("load", event => (store.innerHTML = request.response));
+    request.send();
+  });
+});
+```
+
+1. We can use an `XMLHttpRequest` object to fetch content and insert it in an existing web page without a full page reload.
+2. We can attach event listeners to content embedded in the page to  circumvent the browser's default behavior and create custom  interactions.
+
+
+
+**Submitting a Form via XHR**
+
+There are three steps to submitting a form using JavaScript:
+
+1.  Serialize the form data.
+2.  Send the request using `XMLHttpRequest`.
+3.  Handle the response.
+
+```js
+let request = new XMLHttpRequest();
+request.open('POST', 'https://example.test/path');
+
+let data = 'this is a test';
+
+request.send(data);
+
+// Or if there was no data to send
+// request.send();
+```
+
+This code results in the following HTTP request
+
+```js
+POST /path HTTP/1.1
+Host: example.test
+Content-Length: 14
+Content-Type: text/plain;charset=UTF-8
+Accept: */*  //The Accept header gets set to */* if it isn't set via setRequestHeader.
+
+this is a test
+```
+
+**URL-encoding POST parameters**
+
+URL encoding also works with `POST` requests, but you must include a `Content-Type` header with a value of `application/x-www-form-urlencoded` when you do. Place the encoded name-value string in the request body.  Here we post a new book to a book-catalog demo application.
+
+```js
+let request = new XMLHttpRequest();
+request.open('POST', 'https://lsjs230-book-catalog.herokuapp.com/books');
+
+request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+let data = 'title=Effective%20JavaScript&author=David%20Herman';
+
+request.addEventListener('load', () => {
+  if (request.status === 201) {
+    console.log(`This book was added to the catalog: ${request.responseText}`);
+  }
+});
+
+request.send(data);
+```
+
+A 201 status means the resource was added successfully on the server,  although our book-catalog application doesn't actually store the data.  This code produces the following HTTP request:
+
+```js
+POST /books HTTP/1.1
+Host: lsjs230-book-catalog.herokuapp.com
+Content-Length: 50
+Content-type: application/x-www-form-urlencoded
+Accept: */*
+
+title=Effective%20JavaScript&author=David%20Herman
+```
+
+The server parses the data in the HTTP request's body and makes it available in the following data structure. * all param values are strings 
+
+```js
+{
+  title: 'Effective JavaScript',
+  author: 'David Herman'
+}
+```
+
+**Submitting a Form**
+
+```js
+<form id="form" method="POST" action="books">
+  <p><label>Title: <input type="text" name="title"></label></p>
+  <p><label>Author: <input type="text" name="author"></label></p>
+  <p><button type="submit">Submit</button></p>
+</form>
+```
+
+To access the values from this form, we can use the `HTMLFormElement.elements` property within an event listener that receives control when the user submits the form:
+
+```js
+let form = document.getElementById('form');
+
+// Bind to the form's submit event to handle the submit button
+// being clicked, enter being pressed within an input, etc.
+form.addEventListener('submit', event => {
+  // prevent the browser from submitting the form
+  event.preventDefault();
+
+  // access the inputs using form.elements and serialize into a string
+  let keysAndValues = [];
+
+  for (let index = 0; index < form.elements.length; index += 1) {
+    let element = form.elements[index];
+    let key;
+    let value;
+
+    if (element.type !== 'submit') {
+      key = encodeURIComponent(element.name);
+      value = encodeURIComponent(element.value);
+      keysAndValues.push(`${key}=${value}`);
+    }
+  }
+
+  let data = keysAndValues.join('&');
+
+  // submit the data
+  let request = new XMLHttpRequest();
+  request.open(form.method, `https://ls-230-web-store-demo.herokuapp.com/${form.getAttribute('action')}`);
+  request.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+  request.addEventListener('load', () => {
+    if (request.status === 201) {
+      console.log(`This book was added to the catalog: ${request.responseText}`);
+    }
+  });
+
+  request.send(data);
+});
+```
+
+This result means that the data the remote system receives will be the  same. The difference between the two examples lies purely in how we  obtain the data.
+
+**Submitting a Form with FormData**
+
+URL-encoding the names and values of each `input` element as we did above is a manual and error-prone process. Modern browsers provide a built-in API to assist in this process, [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData/Using_FormData_Objects#Retrieving_a_FormData_object_from_an_HTML_form). Here's how to use it:
+
+Please take note that `FormData` only uses input fields that have a `name` attribute. As you can see, using `FormData` makes it easy to serialize the form's data!
+
+```js
+let form = document.getElementById('form');
+
+form.addEventListener('submit', event => {
+  // prevent the browser from submitting the form
+  event.preventDefault();
+
+  let data = new FormData(form);
+
+  let request = new XMLHttpRequest();
+  request.open(form.method, `https://ls-230-web-store-demo.herokuapp.com/${form.getAttribute('action')}`);
+
+  request.addEventListener('load', () => {
+    if (request.status === 201) {
+      console.log(`This book was added to the catalog: ${request.responseText}`);
+    }
+  });
+
+  request.send(data);
+});
+```
+
+One thing to note is that `FormData` uses a different serialization format called *multipart*. Forms that include file inputs use this same serialization. Since `FormData` can upload files, it makes sense for it to default to this multipart format.
+
+```js
+POST /books HTTP/1.1
+Host: lsjs230-book-catalog.herokuapp.com
+Content-Length: 234
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryf0PCniJK0bw0lb4e
+Accept: */*
+
+------WebKitFormBoundaryf0PCniJK0bw0lb4e
+Content-Disposition: form-data; name="title"
+
+Effective JavaScript
+------WebKitFormBoundaryf0PCniJK0bw0lb4e
+Content-Disposition: form-data; name="author"
+
+David Herman
+------WebKitFormBoundaryf0PCniJK0bw0lb4e--
+```
+
+The body of requests sent using multipart form serialization contains a  series of parts. Each section is prefixed by a string (in this case, `------WebKitFormBoundaryf0PCniJK0bw0lb4e`), and includes an HTTP header called `Content-Disposition` that provides the name of a parameter and its value. Here's one part of the above request for illustration:
+
+Without credentials, anybody in the world can change the product  information. One way to authenticate is to provide a special header that contains an authentication token that only an authorized client should  know. In a real application, the user would login to a site, which in  turn would return a unique token, possible via a cookie. For now, we'll  add the header manually with a simple (and insecure) string.
+
+**Loading JSON via XHR**
+
+Sometimes, though, it makes more sense to load data in a primitive data  structure and render it with the client-side code. This situation often  occurs when the user interface has widgets that the server doesn't  render.
+
+What do we mean by server-side vs. client-side rendering?
+
+Server-side rendering (SSR) involves building a complete web page on  the server side of things and sending that page to the client - our web  browser - which then displays it.
+
+Client-side rendering (CSR) occurs when the server sends only a  bare-bones HTML document and some JavaScript to the client. The client  then executes the JavaScript code, which requests the data it needs and  fills out the rest of the page dynamically.
+
+Modern browsers make this process a bit easier by providing native  support for fetching JSON data. To do this, we can take advantage of the `responseType` property to tell the browser how to handle the data it receives.
+
+The valid values for `responseType` are: `text`, `json`, `arraybuffer`, `blob`, and `document`.
+
+```js
+//FROM THIS: 
+
+let request = new XMLHttpRequest();
+request.open('GET', 'https://api.github.com/repos/rails/rails');
+
+request.addEventListener('load', event => {
+  let data = JSON.parse(request.response);
+
+  // do something with data
+});
+
+request.send();
+
+//TO THIS:
+
+let request = new XMLHttpRequest();
+request.open('GET', 'https://api.github.com/repos/rails/rails');
+request.responseType = 'json';
+
+request.addEventListener('load', event => {
+  // request.response will be the result of parsing the JSON response body
+  // or null if the body couldn't be parsed or another error
+  // occurred.
+
+  let data = request.response;
+});
+
+request.send();
+```
+
+We can avoid this boilerplate by setting `responseType` to `json`. `request.response` either contains a value, or it doesn't, and our code can check that condition.
+
+```js
+let request = new XMLHttpRequest();
+request.open('GET', 'htps://api.github.com/repos/rails/rails');
+
+request.addEventListener('load', event => {
+  let data = JSON.parse(request.response);
+  console.log(request.status);
+  console.log(data.open_issues);
+});
+
+request.addEventListener('error', event => {
+  console.log('The request could not be completed!');
+});
+
+request.send();
+```
+
+
+
+**Sending Data via XHR**
+
+1. Serialize the data **into valid JSON**.
+2. Send the request using `XMLHttpRequest` **with a `Content-Type: application/json; charset=utf-8` header**.
+3. Handle the response.
+
+```js
+let request = new XMLHttpRequest();
+request.open('POST', 'https://lsjs230-book-catalog.herokuapp.com/books');
+
+request.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+
+let data = { title: 'Eloquent JavaScript', author: 'Marijn Haverbeke' };
+let json = JSON.stringify(data);
+
+request.send(json);
+```
+
+```js
+function createProduct(productData) {
+  let json = JSON.stringify(productData);
+  let request = new XMLHttpRequest();
+
+  request.open('POST', 'https://ls-230-web-store-demo.herokuapp.com/v1/products');
+  request.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+  request.setRequestHeader('Authorization', 'token AUTH_TOKEN');
+
+  request.addEventListener('load', () => {
+    console.log(`This product was added: ${request.responseText}`);
+  });
+
+  request.send(json);
+}
+
+createProduct({
+  name: 'HB pencil',
+  sku: 'hbp100',
+  price: 50,
+});
+
+```
+
+
+
+**Cross-Domain XMLHttpRequests with CORS**
+
+The scheme, hostname, and port of a web page's URL define its origin. A cross-origin request occurs when the page tries to access a resource  from a different origin.
+
+Let's consider the URL `http://mysite.com/doc1`. If the  web page from this URL requests a resource from any of the following  URLs, it will be considered a cross-origin request.
+
+- https://mysite.com/doc1 (different scheme/protocol)
+- http://mysite.com:4000/doc1 (different port)
+- http://anothersite.com/doc1 (different host)
+
+A cross-origin request could be a request for an image, a JavaScript  file, an XHR, or any other resource. The most important kind of  cross-origin request for our purposes is a cross-domain request: a  request from one domain (hostname) to another domain.
+
+Cross-domain requests in web browsers have security vulnerabilities that hackers can exploit to launch attacks. These attacks often lure a user  into clicking a carefully crafted link that sends a request to an  application with the user's login credentials. These security issues are beyond the scope of our discussion here. Search *XSS* and *CSRF* if you're interested in finding out more about these attacks.
+
+**Cross- Origin requests with XHR**
+
+By default, an `XHR` object can't send **cross-origin** requests because of the aforementioned security problems. All browsers  implement a security feature called the same-origin policy. It prevents `XMLHttpRequest` from making cross-domain requests. The application can request  resources from the origin domain, but a request from any other domain  causes an error.
+
+You might ask how you can use all the APIs available for public  consumption on web applications if cross-origin requests from XHR  objects aren't allowed? Indeed, many applications do use APIs for  weather information, stocks, sports scores, maps and all kinds of other  services hosted at different domains. The answer is that they use the  Cross-Origin Resource Sharing (CORS) mechanism to allow cross-origin  access to resources.
+
+Cross-Origin Resource Sharing is a W3C specification that defines how the browser and server must communicate when accessing resources across origins. The idea behind CORS is to let the two systems know enough  about each other to determine whether the response should succeed or  fail. Applications use custom HTTP request and response headers to  implement this mechanism.
+
+According to the specification, every `XMLHttpRequest` sent by the browser must have an `Origin` header that contains the origin of the requesting page. The server uses this header to determine whether it should send a corresponding header  in the response.
+
+The browser automatically adds the `Origin` header as part of an XHR. For example, if we send an XHR from a page hosted at `http://localhost:8080`, the browser adds the following request header:
+
+`Origin: http://localhost:8080`
+
+When the server receives this request, it checks the `Origin` header and determines whether the request came from an origin that is  allowed to see the response. If it is, it sends the response back with  an `Access-Control-Allow-Origin` header that contains the same origin. In our example, the response header will be:
+
+`Access-Control-Allow-Origin: http://localhost:8080`
+
+If the server wants to make a resource available to everyone, it can send the same header, but with a value of `*`:
+
+`Access-Control-Allow-Origin: *`
+
+When the browser sees the `Access-Control-Allow-Origin` header, it checks whether the value contains the correct origin or `*`. If it does, the browser makes the response available to the application. Otherwise, it raises an error.
+
+It's important to note that even if the server sends the correct response, but without the `Access-Control-Allow-Origin` header with the appropriate value, the browser will raise an error and not let the script access the response.
+
+```js
+router.get('/areas_of_continents', (req, res, next) => {
+  // code omitted for brevity
+  res.set('Access-Control-Allow-Origin', 'http://localhost:8080');
+  // the following line also works
+  // res.set('Access-Control-Allow-Origin', '*');
+  res.json(continents);
+});
+```
+
+The Cross-Origin Resource Sharing specification fulfills the need for  legitimate cross-origin requests. It gives us a standard way to access  resources from different origins without the security problems  associated with cross-origin requests.
+
+
+
+**Throttling**
+
+What we would want to do is delay sending an XHR to the server for a short period, and not send it at all if we no longer need it. The technique waits for some specified time before sending a request to the server. If, in the interim, that request becomes irrelevant due to a newer request, we discard the original request and start a new delay period for the newer request.
+
+Many JS libraries provide this capability, often with a function named `debounce`. This function takes a callback and a delay in milliseconds as arguments and returns a new function that calls the callback after the specified delay elapses. Let's get a clearer picture of how this works with a custom version of `debounce`.
+
+The utility of `debounce` isn't limited to optimizing AJAX requests. It can optimize the calling frequency of any event handler that gets called too often. Examples include scrolling and mouse movements
+
+Finished code for Autocomplete
+
+https://launchschool.com/lessons/3728e24b/assignments/2d8ea208
+
+
+
+**SUMMARY**
+
+- AJAX is a technique used to exchange data between a browser and a server without causing a page reload.
+- Modern browsers provide an API called the `XMLHttpRequest` to send AJAX requests.
+- Some modern applications rely exclusively on JavaScript and `XMLHttpRequest` to communicate with the server and build up the DOM. Such applications are called *single page applications*
+- Sending requests through `XMLHttpRequest` mainly involves the following steps:
+  - Create a new `XMLHttpRequest` object.
+  - Use the `open` method on the XHR object to specify the method and URL for the request.
+  - Use the `setRequestHeader` method on the XHR object to set headers you'd like to send with the request. Most of the headers will be added by the browser automatically.
+  - Use the `send` method on the XHR object to trigger the whole action and on POST request we can also pass serialized data as an argument.
+  - Attach an event handler for the `load` event to the XHR object to handle the response.
+  - Attach an event handler for the `error` event to the XHR object to handle any connection errors. This is not required but it's a good practice.
+- XHR objects send asynchronous requests by default, meaning that the rest of the code continues to execute without waiting for the request to complete.
+- Important properties on an XHR object are: `responseText`, `response`, `status`, and `statusText`
+- The data sent along with requests, if any, must be serialized into a widely supported format.
+- The three request serialization formats in widespread use are: 1) *query string/url encoding*, 2) *multi-part form data*, 3) and *JSON*.
+- It's a good practice to send a `Content-Type` header with XHR. This helps the server parse the request data.
+- Three popular response formats are: 1) HTML, 2) JSON, 3) XML.
+- The single most popular serialization format currently in use is JSON.
+- To submit a form via XHR, an instance of `FormData` can be used to conveniently serialize the form into multi-part data format.
+- One useful property on an XHR object is `responseType`. It's particularly useful when the response is expected to be JSON. When its value is set to `"json"`, the XHR object's response property gives us parsed JSON.
+- One major constraint on XHR is the browsers' same-origin policy that limits communication to the same domain, the same port, and the same scheme. Any attempt to communicate outside these limits result in a security error.
+- The standard solution for cross-origin restrictions is a W3C specification called Cross-Origin Resource sharing (CORS). CORS recommends using an `Origin` header on the request and an `Access-Control-Allow-Origin` header on the response for cross-origin communications.
+
+Exercises
+
+https://launchschool.com/exercise_sets/e0015dad
+
+
+
+**VIDEO**
+
+https://launchschool.com/lessons/e1800f40/assignments/6b7153e3
+
+
+
+**Libraries**
+
+When you first approach a new library, it's often useful to view it in a certain context: as a tool that serves an immediate purpose, rather than something you necessarily want to devote a lot of time to becoming an expert in.
+
+The key to effectively using a library within that context is [Just In Time (JIT) learning](https://medium.com/launch-school/just-in-time-learning-f6a10886ddfe), a skill which allows you to quickly ramp up on a new tool, language or even codebase and be able to work with it productively in a short period of time.
+
+
+
+**Including an External Library**
+
+In order to make use of a library in your client-side code, you need to *include* that library in the web page(s) where it is going to be used.
+
+One important thing to note is that you should place the `<script>` tag for the library *before* any script tags where that library is used, for example:
+
+1) Host the library locally 
+
+   ```
+   ├── index.html
+   ├── img
+   ├── css
+   ├── js
+   │   ├── app.js
+   │   └── vendor
+   │       └── jquery.js
+   ```
+
+   ```html
+   <!doctype html>
+   <html lang="en">
+      <head>
+         <title>My Awesome Project</title>
+         <script src="/js/vendor/jquery.js"></script>
+      </head>
+      <body>
+   
+      <!-- rest of html -->
+   ```
+
+   
+
+2. Use Content Distribution Network (CDN)
+
+   1. A content delivery network (CDN) is a geographically distributed group of servers that caches content close to end users. A CDN allows for the quick transfer of assets needed for loading Internet content, including HTML pages, JavaScript files, stylesheets, images, and videos.
+
+      ```html
+      <!doctype html>
+      <html lang="en">
+         <head>
+            <title>My Awesome Project</title>
+            <script
+              src="https://code.jquery.com/jquery-3.6.0.min.js"
+              integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+              crossorigin="anonymous"
+            ></script>
+         </head>
+         <body>
+      
+         <!-- rest of html -->
+      ```
+
+      When loading assets from a CDN, it's essential that you include the `integrity` and `crossorigin` attributes within your `script` tag.
+
+      These attributes are part of a browser security feature known as **Subresource Integrity**.
+
+      - The `integrity` attribute allows browsers to verify that the resource being requested hasn't been manipulated in transit.
+      - The `crossorigin` attribute enables the browser to accurately process the CORS request.
+
+      For more information, visit the [Subresource Integrity](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) page on MDN.
+
+**JQuery**
+
+This last point is a key reason why jQuery was created in the first place. At the time the library was launched, browsers had lots of compatibility issues. A lack of standardization among browsers led to many cross-browser quirks. Front-end developers at the time had to write lots of hacks and workarounds to make sure that their code worked in different browsers. The idea behind jQuery was to create an abstraction layer that took care of all these workarounds for us.
+
+Many of the browser compatibility and standardization issues that led to jQuery's creation and massive popularity have now been resolved. Adherence to standards and modern browser APIs mean that we now can accomplish most of what jQuery does with vanilla JavaScript, without having to write complex hacks and workarounds.
+
+- [
+  Courses](https://launchschool.com/course_catalog)
+- [JS230 DOM and Asynchronous Programming with JavaScript](https://launchschool.com/courses/a3843755)
+- [JavaScript Libraries](https://launchschool.com/lessons/e1800f40)
+- 5. jQuery
+
+# jQuery
+
+So far in this course, we've worked directly with the DOM and browser APIs to manipulate elements, handle events, and make AJAX requests. In this assignment, we'll take a first look at **jQuery**. jQuery is a JavaScript library that provides a convenient API to perform these types of functions. It also works consistently across most browsers and platforms.
+
+This last point is a key reason why jQuery was created in the first place. At the time the library was launched, browsers had lots of compatibility issues. A lack of standardization among browsers led to many cross-browser quirks. Front-end developers at the time had to write lots of hacks and workarounds to make sure that their code worked in different browsers. The idea behind jQuery was to create an abstraction layer that took care of all these workarounds for us.
+
+Many of the browser compatibility and standardization issues that led to jQuery's creation and massive popularity have now been resolved. Adherence to standards and modern browser APIs mean that we now can accomplish most of what jQuery does with vanilla JavaScript, without having to write complex hacks and workarounds.
+
+It's true to say that jQuery is nowhere near as prominent within the JavaScript ecosystem as it once was. You'll still find plenty of jQuery in the wild though, in legacy codebases and potentially for new projects where there is a requirement to support older browsers. There are also plenty of frameworks and plug-ins that still have jQuery as a dependency. For these reasons it's still useful to have some understanding and familiarity with the library.
+
+It's important to note that jQuery is *not a separate language* from JavaScript, but a library of functions and methods that abstract away JavaScript functionality. At its core, jQuery is still JavaScript.
+
+
+
+**The jQuery Function**
+
+What jQuery does is provide a simple, yet powerful, API for handling events.
+
+At its core, jQuery is a **function** that wraps a *collection of DOM elements* and some *convenience methods* into an *object*. You can call the function to select the elements you need to process, and manipulate the object or its elements with methods built into the object.
+
+What is the jQuery function? Internally, it is a function that works with an argument that you pass to it.
+
+- If the argument is a string or a DOM element, it wraps a collection of jQuery objects and returns them.
+- If the argument is a function, jQuery uses that function as a callback when the *document is ready*. (We'll discuss what this means a little later in this assignment).
+- While you can use the name `jQuery` when calling jQuery, it's common practice to use the alias `$` instead. Either way, we pass the function a string that resembles a CSS selector. For example, if we have a `div` with an `id` of `content`, we can pass jQuery the string `"#content"`:
+
+```js
+var $content = jQuery('#content');
+var $sameContent = $('#content');
+```
+
+Both forms of the function return an object that represents a collection of elements. For `"#id"` selectors, the returned object represents no more than one element (since ids should be unique on the page). For other selectors, the returned object may reference many elements.
+
+prefixing names that reference jQuery objects with a `$` so we can instantly distinguish them from other (non-jQuery) objects.
+
+**Collections**
+
+Suppose you want to act on all the list items on the page. As we mentioned earlier, *the return value of jQuery is a collection*. When we use an ID selector, the collection contains at most *one element*; with other selectors, it can be *any size*.
+
+If you have, say, three list items on your page, you can verify that the above code selected all three by checking the `length` property of the jQuery collection `$lis`:
+
+If you're unsure whether a variable or property references a jQuery object, you can check the `jquery` property: The property returns the version number of jQuery as a string (e.g., `"3.6.2"`) if the object is a jQuery object, `undefined` if it is not.
+
+`console.log(content.jquery);`
+
+**The DOM Ready Callback**
+
+Since most of jQuery acts on DOM elements, we must wait for the page to load before we execute our code. jQuery has that covered as well. Meet the **DOM ready callback**:
+
+```js
+$(document).ready(function() {
+  // DOM loaded and ready, referenced image on img tags are not ready
+});
+```
+
+The callback function we pass to `ready` executes after the document, and its dependencies, finish loading.
+
+If it uses the natural image dimensions, though, you must wait for the window `load` event instead.  In some cases, you must delay execution until the window finishes loading:
+
+```js
+$(window).load(function() {
+  // DOM loaded and ready, referenced image on img tags loaded and ready
+});
+```
+
+There's an even shorter way to write a DOM ready callback. You can skip traversing the document and binding to its `ready` event by passing a callback function directly to the jQuery function, `$()`:
+
+```js
+$(function() {
+  // DOM is now loaded
+});
+```
+
+**jQuery Object Methods**
+
+Once you obtain an object from jQuery, you can perform a variety of tasks with it. You can, for example, change the `font-size` for all of the elements represented by the object with the `css` method:
+
+```js
+$content.css('font-size', '18px');
+```
+
+**Getters and Setters**
+
+We often use the term **setter method** to refer to methods that set properties for an object. We also use the term **getter method** to refer to methods that retrieve the current values for a property. Some jQuery methods, including `css`, have both setter and getter forms: if you omit the last argument, the method acts as a getter; otherwise, it acts as a setter.
+
+```js
+console.log($content.css('font-size'));    // getter
+$content.css('font-size', '18px');         // setter
+```
+
+Likewise, the `width` and `height` methods act as both getters and setters. To check the `$content` object's width, call `width`. To set it to half that width, we use the same method with the new width. Note that `width` and `height` return and use numeric values.
+
+```js
+var width = $content.width();  // 800 (getter)
+$content.width(width / 2);     // Sets to 400
+console.log($content.width()); // now 400 (getter)
+```
+
+**Chaining Method Calls**
+
+Repetitive code like this is tedious and error prone when working with more than a couple of properties. We can take advantage of the fact that most jQuery methods return an object that contains jQuery methods, which means you can chain calls together:
+
+```js
+$content.css('font-size', '18px').css('color', '#b00b00');
+```
+
+Or better Yet: Object Argument 
+
+```js
+$content.css({
+  'font-size': '18px',
+  color: '#b00b00'
+});
+```
+
+**Property Name Syntax**
+
+Note that we quoted the `font-size` property name here, but didn't do that for `color`. Since `font-size` contains a hyphen that JavaScript tries to interpret as subtraction, we can't write `font-size` without quotes; the quotes prevent JavaScript from trying to process `-` as the subtraction operator.
+
+If this syntax annoys you, jQuery also accepts camel case property names instead. Whenever you have a CSS property that includes one or more hyphens, you can omit the hyphens and capitalize the next letter instead. For `font-size`, for example, you can use `fontSize` instead
+
+```js
+$content.css({
+  fontSize: '18px',
+  color: '#b00b00'
+});
+```
+
+**Selectors Unique to jQuery**
+
+https://api.jquery.com/category/selectors/
+
+**Convenience Methods**
+
+jQuery also provides a variety of convenience methods directly attached to the jQuery object. If you need to check what type a variable is, you can use methods like `$.isArray` and `$.isFunction`. You can concatenate two arrays using `$.merge`, or make a new array with `$.map`. The most important method of the jQuery object is the `$.ajax` method, which lets you make AJAX requests in a much easier fashion than if you had to support multiple versions of Internet Explorer on your own. We'll get to AJAX a bit later.
+
+*Links:*
+
+https://learn.jquery.com
+
+https://api.jquery.com
+
+https://learn.jquery.com/using-jquery-core/jquery-object/
+
+
+
+My words: 
+
+So wrapping an element in a jQuery object we have access to the methods available to that object
+
+```js
+// Setting the inner HTML with jQuery.
+ 
+var target = document.getElementById( "target" );
+ 
+$( target ).html( "<td>Hello <b>World</b>!</td>" );
+```
+
+```
+// Selecting only the first <h1> element on the page (alternate approach). var firstHeadingElem = $( "h1" )[ 0 ];
+```
+
+In either case, `firstHeadingElem` contains the native DOM element. This means it has DOM properties like `.innerHTML` and methods like `.appendChild()`, but *not* jQuery methods like `.html()` or `.after()`. The `firstHeadingElem` element is more difficult to work with, but there are certain instances that require it. One such instance is making comparisons.
+
+An important detail regarding this "wrapping" behavior is that each wrapped object is unique. This is true *even if the object was created with the same selector or contain references to the exact same DOM elements*.
+
+one might expect that the contents will grow and shrink over time as `<p>` elements are added and removed from the document. jQuery objects do **not** behave in this manner.
+
+
+
+**jQuery DOM Traversal**
+
+Earlier in this course we looked at accessing DOM nodes and HTML elements using DOM API methods such as `querySelector()`, `querySelectorAll()`, `getElementById()`, and `getElementsByClassName()`. We also explored using properties such as `firstChild`, `parentNode`, `firstElementChild`, and `nextElementSibling` to traverse the DOM, or to get from one element to another.
+
+`.parent()`
+
+We can call all parents like this or add a CSS selector as an argument to select certain ones 
+
+```js
+var $p = $('p');
+
+$p.parent('.highlight').css('color', 'blue');
+```
+
+`.closest`
+
+With `parent`, it never looks at the current element for consideration. 
+
+```js
+<ul id="navigation">
+  <li>
+    <a href="#">Categories</a>
+    <ul>
+      <li><a id="html" href="#">HTML</a></li>
+      <li><a id="css" href="#">CSS</a></li>
+      <li><a id="javascript" href="#">Javascript</a></li>
+    </ul>
+  </li>
+</ul>
+```
+
+```js
+$('#javascript').closest('ul').addClass('categories');
+```
+
+This will grab the next closest `ul`, and not the outermost parent `ul`. If we wanted to grab all parent `ul` elements, there's a more comprehensive method called `parents` that will continue all the way out to the root element. Change the `closest` method call to `parents` and you'll see that we add the `"categories"` class to both `ul`s.
+
+`$('#javascript').parents('ul').addClass('categories');`
+
+`.find()`
+
+so all children and children of children 
+
+One extremely useful method is the `find` method. You can call it on an existing jQuery object to traverse to one of its child elements using another CSS-like selector.
+
+`alert($('ul#navigation').find('li').length);` // Should be 4
+
+`.children()`
+
+only immediate children 
+
+`alert($('#navigation').children().length);  // Should be 1`
+
+`.nextAll()`
+
+The methods outlined so far will cover almost all of your traversing using jQuery objects. Sometimes, however, you may want to do something like grab all of the sibling elements that come after the current one and perform some action on them. The `nextAll` method will return all siblings after, with an optional selector passed in.
+
+`.prevAll()`
+
+There's a complementary method called `prevAll` that goes in the opposite direction. 
+
+`.siblings()`
+
+And if you needed all the siblings, rather than grabbing the parent and then getting all its children, you could simply use `siblings` with an optional selector.
+
+```js
+// Find all list items after the CSS list item and hide them
+var $css = $('#css').closest('li');
+$css.nextAll().hide();
+
+// Find all list items before the CSS list item and hide them
+$css.prevAll().hide();
+
+// Find all sibling lis and show them
+$css.siblings().show();
+```
+
+The `next()` and `prev()` methods get a *single* sibling element, either immediately after or immediately preceding the current one.
+
+`eq`
+
+`$('article').find('li').eq(3).get(0)` returns fourth li item under article
+
+`.next()` `$("li li:contains('ac ante')").next();` next element
+
+Find all the anchor elements that have an `href` value that begins with #.
+
+`$('a[href^="#"]');`
+
+Find all elements that have a class name that contains `"block"`.
+
+`$('[class*=block]');`
+
+```js
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>jQuery</title>
+    <script src="jQuery.js"></script>
+    <script src="anotherFile.js"></script>
+    <link rel="stylesheet" href="css.css">
+  </head>
+    <body>
+      <ul id="navigation">
+        <li>
+          <a href="#">Categories</a>
+          <ul>
+            <li><a id="html" href="#">HTML</a></li>
+            <li><a id="css" href="#">CSS</a></li>
+            <li><a id="javascript" href="#">Javascript</a></li>
+          </ul>
+        </li>
+      </ul>
+    </body>
+</html>
+```
+
+**Handlers**
+
+You should already know from that earlier lesson that an event listener is a function which gets executed when a particular event occurs. In that lesson we looked at using the `addEventListener()` method from the Event API in this context. jQuery wraps this functionality in a bunch of methods available to a jQuery object. Let's look at some examples.
+
+```html
+<ul>
+  <li><a href="#">Apples</a></li>
+  <li><a href="#">Bananas</a></li>
+  <li><a href="#">Oranges</a></li>
+</ul>
+<p>
+  some text 
+</p>
+```
+
+```js
+$(function() {
+  $p = $('p')
+
+  $("a").on("click", function (event) {
+    event.preventDefault();
+    let $anchor = $(this);
+    $p.text($anchor.text());
+  });
+
+  $('form').on('submit', event => {
+    event.preventDefault()
+    let $input = $(this).find('input[type=text]')
+    $p.text(`Your favorite fruit is ${$input.val()}`)
+  })
+
+});
+```
+
+We now need to find the paragraph and replace its content with the text of the clicked anchor. We can use jQuery's `text()` method to perform the text replacement. We use this method twice in the example below: to *get* the text content of the `$anchor` object, and to *set* the text content of the `$p` object.
+
+jQuery has convenience methods for many events. These methods have the same name as the event types and let us bind listeners to the events less verbosely. Here's our code rewritten with the `click` and `submit` convenience methods. BUT these are deprecated so dont use: 
+
+```js
+$(function () {
+  let $p = $("p");
+  let OUTPUT = "Your favorite fruit is ";
+
+  $("a").click(function (e) {
+    e.preventDefault();
+    let $event = $(this);
+    $p.text(OUTPUT + $event.text());
+  });
+
+  $("form").submit(function (e) {
+    e.preventDefault();
+    let $input = $(this).find("input[type=text]");
+    $p.text(OUTPUT + $input.val());
+  });
+});
+```
+
+**JQuery Event Delegation**
+
+When you have an event handler that is being bound to a large number of elements that all exist within the same container, it's more efficient to delegate the event handling to the parent element rather than bind it to each element individually. Think of a list of 30 items, each of which includes a link to delete the item from the list. If we used an event bound directly to the anchor, there will be 30 events bound. This may not slow down our page that much, but if we have larger and larger sets of elements that all use the same event handler, we'll have a very inefficient application that will be prone to slowdowns.
+
+```html
+<ul>
+  <li>
+    <p>Bananas</p>
+    <a href="#">Remove</a>
+  </li>
+  <!-- 29 more list items, each with a remove anchor -->
+</ul>
+```
+
+```js
+// This callback is bound to each anchor, making 30 event handlers in memory
+
+$("a").on("click", function (e) {
+  e.preventDefault();
+  $(this).closest("li").remove();
+});
+
+Copy Code
+// This callback is bound to a single element, yet it is able to process
+// click events on any of the remove anchors within it.
+
+$("ul").on("click", "a", function (e) {
+  e.preventDefault();
+  $(e.target).closest("li").remove();
+});
+```
+
+Instead, we would attach the same event to the parent unordered list element. Then we would only have one event listener that could then check for which anchor was clicked and perform our processing from there.
+
+
+
+
+
+
+
+
+
+
+
+
+
+**HTML with FORM**
+
+```html
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <title>Click Handler</title>
+    <meta charset="utf-8" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.2/jquery.min.js"></script>
+    <script src="anotherFile.js"></script>
+  </head>
+  <body>
+    <main>
+      <form action="#" method="get">
+       <fieldset>
+        <h1>Type a key to toggle the accordion with</h1>
+        <input type="text" id="key" name="key" maxlength="1" />
+        <input type="submit" value="Set" />
+       </fieldset>
+      </form>
+    
+
+      <div id="accordion">
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+      </div>
+
+    </main>
+  </body>
+</html>
+```
+
+**HTML Templating with JS**
+
+Building HTML from JS
+
+```js
+let products = [{
+  name: 'Banana',
+  quantity: 14,
+  price: 0.79
+}, {
+  name: 'Apple',
+  quantity: 3,
+  price: 0.55
+}];
+
+let $list = $('ul');
+let productsHtml = products.map(function(item) {
+  return '<li><h3>' + item.name + '</h3><dl><dt>Quantity:</dt><dd>' + item.quantity + '</dd><dt>Price:</dt><dd>$' + item.price + '</dd></dl></li>';
+});
+
+$list.html(productsHtml.join(''));
+```
+
+This is clearly not a sustainable method of writing HTML using JavaScript. This is why the concept of an HTML template was introduced.
+
+Server-side technologies like PHP, Django, and Rails already had their own ways of generating HTML using data, but JavaScript had nothing built-in to tackle this problem. Thankfully, some innovative people created easy-to-use solutions.
+
+**Handlebars**
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.js"></script>
+
+They simplify the process of manually updating the view and at the same time they improve the structure of the application by allowing developers to separate the business logic from the rest of the code.
+
+designed for client side rendering 
+
+ There's another popular library that falls somewhere in between, adding logic and support for templates, but keeping the JavaScript out of the HTML. This library is [Handlebars](http://handlebarsjs.com/). Handlebars can be used on its own. It has no dependencies of any kind, meaning that whether or not you are using jQuery, or an MVC framework, or anything else client-side, you can use Handlebars for your templating.
+
+Handlebars uses a fast and complex method of string replacement that will allow you to write the names of properties of your objects within handlebars and have them replaced with the property values. Handlebars templates allow you to have property names surrounded by two opening and closing curly braces, `{{ }}`. Using our above example, the Handlebars template for a product would look like this:
+
+```html
+<li>
+  <h3>{{name}}</h3>
+  <dl>
+    <dt>Quantity:</dt>
+    <dd>{{quantity}}</dd>
+    <dt>Price:</dt>
+    <dd>${{price}}</dd>
+  </dl>
+</li>
+```
+
+These handlebars properties can be placed anywhere within the HTML string. If we wanted to output the quantity as the value of a data attribute on the list item, we could add the attribute and use a handlebars property inside the attribute value.
+
+`<li data-quantity="{{quantity}}">`
+
+**The `if` helper**
+
+Handlebars also has the ability to check properties for whether or not they are truthy values. A Handlebars conditional is `false` if the property value is `false`, `undefined`, `null`, `''`, `0` or an empty array.
+
+With any Handlebars-executed template code, we prefix it with a `#` sign. This tells Handlebars to perform an action at this point in our template before rendering.
+
+This is known as the `if` helper. There are other built-in helpers in Handlebars, and they all start with a `#` sign and end with a closing element. The `if` helper also has an `{{else}}` section that can be used. Note that it does not have a `#` sign in front of it. Handlebars has already been notified that the contents of the `#if` block should be treated differently, so it knows to look for this `{{else}}`keyword and treat it as the alternate condition rather than as a property that is to be output.
+
+How do we use this to output our items, though? In Handlebars, we would use template pre-compilation to create and store a function that can be called to build our template based on an object passed into it. The Handlebars library gives us an object named `Handlebars` that holds the methods we will need to create templates and partials. To create a template function, we would use the `compile` method to provide it an HTML string that we want to use as our template.
+
+Handlebars allows for template reuse through partials. Partials are normal Handlebars templates that may be called directly by other templates ([read more](http://handlebarsjs.com/guide/#partials)).
+
+Just like we did in the previous assignment, we can create a template in our HTML using a script element. If we give the element a type attribute of something other than `text/javascript`, the browser won't try to execute it as JavaScript. We'll use a type of `text/x-handlebars` to wrap our template in a `script` element. We'll add an `id` to it to make it easier to locate it with jQuery.
+
+Just like we did in the previous assignment, we can create a template in our HTML using a script element. If we give the element a type attribute of something other than `text/javascript`, the browser won't try to execute it as JavaScript. We'll use a type of `text/x-handlebars` to wrap our template in a `script` element. We'll add an `id` to it to make it easier to locate it with jQuery.
+
+tag to appear inside 
+
+`<script id='productTemplate' type='text/x-handlebars'>`
+
+```js
+<script id='productTemplate' type='text/x-handlebars'>
+  <li>
+    <h3>{{name}}</h3> //curly braces are expressions
+    <dl>
+      <dt>Quantity:</dt>
+      <dd>{{quantity}}</dd>
+      <dt>Price:</dt>
+      <dd>
+        ${{price}}
+        {{#if on_sale}}
+        <strong>SALE!</strong>
+        {{/if}}
+      </dd>
+    </dl>
+  </li>
+</script>
+```
+
+The `Handlebars.compile` method converts our HTML into a template function. We can assign the template function to a new variable, `productTemplate`:
+
+`let productTemplate = Handlebars.compile($('#productTemplate').html());`
+
+Here we have read the contents of the script element using jQuery's `.html` method and passed that in to the `Handlebars.compile` method. We get a function in return that can be passed an object, and the function will return an HTML string with all of the properties filled in.
+
+We can now loop over our products array and write this template using the item. We'll store each template in an array just like before, but we won't have the messy string concatenation and conditional.
+
+```js
+let $list = $('ul');
+let productsHtml = products.map(function(product) {
+  return productTemplate(product);
+});
+
+$list.html(productsHtml.join(''));
+```
+
+![how handlebars works](https://uploads.sitepoint.com/wp-content/uploads/2015/07/1435920536how-handlebars-works.png)
+
+1. Handlebars takes a template with the variables and compiles it into a function
+2. This function is then executed by passing a JSON object (or js object) as an argument. This JSON object is known as context and it contains the values of the variables used in the template
+3. On its execution, the function returns the required HTML after replacing the variables of the template with their corresponding values
+
+We can also write comments inside Handlebars templates. The syntax for Handlebars comments is `{{!TypeYourCommentHere}}`.                                 {{!--TypeYourCommentHere--}}
+
+**each helper in HandleBars**
+
+We can write our loop within our template with `each`.
+
+You can iterate over a list using the built-in `each` helper. Inside the block, you can use `this` to reference the element being iterated over.
+
+We pass an object that has an array as a value assigned to a property as an argument to the compiled html.
+
+```html
+<script id='productTemplate' type='text/x-handlebars'>
+  {{#each items}}
+  <li>
+    <h3>{{name}}</h3>
+    <dl>
+      <dt>Quantity:</dt>
+      <dd>{{quantity}}</dd>
+      <dt>Price:</dt>
+      <dd>
+        ${{price}}
+        {{#if on_sale}}
+        <strong>SALE!</strong>
+        {{/if}}
+      </dd>
+    </dl>
+  </li>
+  {{/each}}
+</script>
+```
+
+```js
+let productTemplate = Handlebars.compile($('#productTemplate').html());
+let $list = $('ul');
+
+$list.html(productTemplate({ items: products }));
+```
+
+This will automatically render a list item for each item in the products array. If we also wanted to output the current index of the loop, we could use the `{{@index}}` expression within the each block.
+
+**Partials**
+
+```html
+<script id='productTemplate' type='text/x-handlebars'>
+  <li>
+    <h3>{{name}}</h3>
+    <dl>
+      <dt>Quantity:</dt>
+      <dd>{{quantity}}</dd>
+      <dt>Price:</dt>
+      <dd>
+        ${{price}}
+        {{#if on_sale}}
+        <strong>SALE!</strong>
+        {{/if}}
+      </dd>
+    </dl>
+  </li>
+</script>
+
+<script id='productsList' type='text/x-handlebars'>
+  {{#each items}}
+  {{> productTemplate}}
+  {{/each}}
+</script>
+```
+
+```js
+// Compile both templates for use later
+let productsList = Handlebars.compile($('#productsList').html());
+let productTemplate = Handlebars.compile($('#productTemplate').html());
+let $list = $('ul');
+
+// Also register the product template as a partial
+Handlebars.registerPartial('productTemplate', $('#productTemplate').html());
+
+// Write the current list to the page
+$list.html(productsList({ items: products }));
+
+// Create a new product
+let newProduct = {
+  name: 'Soup',
+  quantity: 1,
+  price: 1.29
+};
+
+// Render the new product with the product template
+$list.append(productTemplate(newProduct));
+```
+
+The `>` sign tells Handlebars to look for a partial with the name `productTemplate`. These partials aren't created automatically, though, so we'll have to register the partial by this name in our JavaScript.
+
+
+
+```html
+<script id="tag" type="text/x-handlebars">
+  <strong>{{this}}</strong>
+</script>
+
+<script id="post" type="text/x-handlebars">
+  <article>
+    <h1>{{title}}</h1>
+    <p><time>Posted on {{published}}</time></p>
+    {{{body}}}
+    <footer>
+      <p>
+        Tags:
+        {{#each tags}}
+        {{>tag}}
+        {{/each}}
+      </p>
+    </footer>
+  </article>
+</script>
+```
+
+```js
+Handlebars.registerPartial('tag', $('#tag').html());
+```
+
+
+
+**HTML in objects body**
+
+So say we had some object:
+
+```js
+let post = {
+  title: 'Lorem ipsum dolor sit amet',
+  published: 'April 1, 2015',
+  body: 'Sed ut perspiciatis unde omnis iste natus error sit'
+};
+```
+
+But we want the body attribute's value to include HTML:
+
+`post.body = '<p>' + post.body + '</p>';`
+
+Then we need to use triple `{}` in the template
+
+```html
+<script id="post" type="text/x-handlebars">
+  <article>
+    <h1>{{title}}</h1>
+    <p><time>Posted on {{published}}</time></p>
+    {{{body}}}
+  </article>
+</script>
+```
+
+**Exercises** 
+
+https://launchschool.com/lessons/e1800f40/assignments/7c85baf6
+
+**Reading**
+
+https://www.sitepoint.com/a-beginners-guide-to-handlebars/

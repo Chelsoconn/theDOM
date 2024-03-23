@@ -1,39 +1,46 @@
-//My answer 
+document.addEventListener("DOMContentLoaded", () => {
+  let store = document.getElementById("store");
 
-document.addEventListener('DOMContentLoaded', event => {
-  let box = document.querySelector(".text-field")
-  let int;
+  let request = new XMLHttpRequest();
+  request.open("GET", "https://ls-230-web-store-demo.herokuapp.com/products");
 
-  function oneChar(key) {
-    return key.length === 1
-  }
+  request.addEventListener("load", event => (store.innerHTML = request.response));
+  request.send();
 
-  box.addEventListener('click', event => {
-    event.stopPropagation()
-    box.classList.add('focused')
-  
-    if (!int) {
-      int = setInterval(() => {
-        box.classList.toggle('cursor')
-      },500)
+  store.addEventListener("click", event => {
+    let target = event.target;
+    if (target.tagName !== "A") {
+      return;
     }
-})
 
-document.addEventListener('click', event => {
-  clearInterval(int);
-  if (box.classList.contains('focused')) {
-    box.classList.remove('focused');
-    box.classList.remove('cursor');
-    int = false
-  }
-})
+    event.preventDefault();
 
-  document.addEventListener('keydown', event => {
-    let textArea = document.querySelector('.content')
-    var t = textArea.textContent
-    if (oneChar(event.key) && Array.from(box.classList).includes('focused')) {
-      textArea.textContent += event.key
-    } else if (event.key === 'Backspace') textArea.textContent = t.slice(0, -1)
-  })
+    let request = new XMLHttpRequest();
+    request.open(
+      "GET",
+      "https://ls-230-web-store-demo.herokuapp.com" + target.getAttribute("href")
+    );
 
-})
+    request.addEventListener("load", event => (store.innerHTML = request.response));
+    request.send();
+  });
+
+  store.addEventListener('submit', event => {
+    event.preventDefault();
+
+    let form = event.target;
+    let request = new XMLHttpRequest();
+    let data = new FormData(form);
+
+    request.open('POST', `https://ls-230-web-store-demo.herokuapp.com${form.getAttribute('action')}`);
+    request.setRequestHeader("Authorization", "token AUTH_TOKEN");
+    request.addEventListener('load', event => store.innerHTML = request.response);
+    request.send(data);
+  });
+});
+
+
+
+//file:///Users/chelseaoconnor/Desktop/theDOM/ex.html
+//file:///Users/chelseaoconnor/Desktop/theDOM/ex.html
+//file:///Users/chelseaoconnor/Desktop/theDOM/ex.html
