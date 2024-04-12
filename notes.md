@@ -235,10 +235,9 @@ A node's type determines what properties and methods it provides to a developer.
   - `Node` provides common behavior to *all* nodes.
 
   - `Text`and `Element`are the chief subtypes of `Node`
-
-    - `Text` nodes hold text.
-
-    - `Element` nodes represent HTML tags.
+- `Text` nodes hold text.
+  
+- `Element` nodes represent HTML tags.
 
 **Determining the Node Type**
 
@@ -365,6 +364,7 @@ This separation of processing converts `walk` from a single-purpose function int
 > p.setAttribute('id', 'complex');
 > p
 = <p class="intro" id="complex">...</p>
+>p.removeAttribute('id')
 ```
 
 Using `setAttribute` to modify certain attributes, most notably `value` in XUL, works inconsistently, as the attribute specifies the default value. To access or modify the current values, you should use the properties. For example, use `Element.value` instead of `Element.setAttribute`.
@@ -461,6 +461,8 @@ When it comes to front-end development and debugging errors in your JavaScript c
 DOCUMENTATION
 
 https://developer.chrome.com/docs/devtools/
+
+Chrome DevTools is a set of web developer tools built directly into the Google Chrome browser. DevTools lets you edit pages on-the-fly and diagnose problems quickly, which helps you build better websites, faster.
 
 VIDEO 
 
@@ -690,7 +692,17 @@ console.log(listItems.length); // logs 4
 
 Notice how the `listItems`' length increases even though we didn't explicitly add any elements to it.
 
+Information about each method details if it is live or not, but there does not seem to be a standard convention for determining it.
 
+`document.getElementsByClassName()` is an `HTMLCollection`, and is live.
+
+`document.getElementsByTagName()` is an `HTMLCollection`, and is live.
+
+`document.getElementsByName()` is a `NodeList` and is live.
+
+`document.querySelectorAll()` is a `NodeList` and is **not** live.
+
+`HTMLCollection`s appear to always be live
 
 ARTICLE 
 
@@ -1065,35 +1077,52 @@ window.onload = function() {
 Exercises NodeSwap
 
 ```js
-window.onload = function() {
-  function nodeSwap(ind1, ind2) {
-    let child1 = document.getElementById(ind1);
-    let child2 = document.getElementById(ind2); 
+function nodeSwap(node1Id, node2Id) {
+  const node1 = document.getElementById(node1Id);
+  const node2 = document.getElementById(node2Id);
 
-    if (!child1 || !child2) return undefined;
-    if (child1.contains(child2) || child2.contains(child1)) return undefined;
-    let parent1 = child1.parentNode;
-    let parent2 = child2.parentNode;
+  if (!isInvalidSwap(node1, node2)) {
+    const node1Clone = node1.cloneNode(true);
+    const node2Clone = node2.cloneNode(true);
+    const node1Parent = node1.parentNode;
+    const node2Parent = node2.parentNode;
 
-    let replacer1 = document.createElement('replacer1');
-    let replacer2 = document.createElement('replacer2');
-    
-    child1.insertAdjacentElement('beforebegin', replacer1);
-    child2.insertAdjacentElement('beforebegin', replacer2);
-
-    parent1.removeChild(child1);
-    parent2.removeChild(child2);
-   
-    parent1.replaceChild(child2, replacer1);
-    parent2.replaceChild(child1, replacer2);
+    node1Parent.replaceChild(node2Clone, node1);
+    node2Parent.replaceChild(node1Clone, node2);
+    return true;
   }
-  nodeSwap(1, 2);
-  nodeSwap(3, 1);
-  nodeSwap(7, 9);
+}
+
+function isInvalidSwap(node1, node2) {
+  return ((!node1 || !node2) ||
+         node1.contains(node2) || node2.contains(node1));
 }
 ```
 
 
+
+
+
+**Recursive Node Tree**
+
+```js
+function nodesToArr(node = document.body) {
+  let children = Array.prototype.slice.call(node.children)
+  let dom = [node.tagName, []];
+
+  // Base Case
+  if (children.length === 0) {
+    return dom;
+  } 
+
+  // Recursive Step
+  children.forEach(childElement => {
+    dom[1].push(nodesToArr(childElement))
+  });
+
+  return dom;
+}
+```
 
 
 
@@ -1104,6 +1133,8 @@ window.onload = function() {
 It's possible to write code that runs partly now, then pauses and continues to run later after a delay of milliseconds, minutes, hours, or even days. We call such code **asynchronous code**; it doesn't run continuously or even when the runtime encounters it.
 
 `setTimeout` is a global method that takes two arguments: a callback function and a time to wait specified in milliseconds (1/1000th of a second). It sets a timer that waits until the given time delay elapses, then invokes the callback function:
+
+`setTimeout()` is an asynchronous function, meaning that the timer function will not pause execution of other functions in the functions stack. In other words, you cannot use `setTimeout()` to create a "pause" before the next function in the function stack fires.
 
 ```js
 setTimeout(() => {
@@ -1142,7 +1173,7 @@ setTimeout(() => {           //4
 In what sequence does the JavaScript runtime run the functions `q`, `d`, `n`, `z`, `s`, `f`, and `g` in the following code?
 
 ```js
-setTimeout(() => { (1)
+setTimeout(() => { 
   setTimeout(() => {
     q();
   }, 15);
@@ -1156,15 +1187,15 @@ setTimeout(() => { (1)
   z();
 }, 10);
 
-setTimeout(() => { (2)
+setTimeout(() => {
   s();
 }, 20);
 
-setTimeout(() => { (3)
-  f();  (4)
+setTimeout(() => { 
+  f();  
 });
 
-g(); (5)
+g();
 ```
 
 f, g, d, z, n, s, q. <-- my answer (wrong)
@@ -1506,15 +1537,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 Things to note
 
-we set attributes that define the attributes 
-
 we use `disabled` for button 
 
 we use keyup to detect a button press 
 
 everytime a button is pressed we are calling that method and getting a new value on the text area 
 
-
+The second argument passed to `toggle` is the force argument. If it is `false` then the token will only be removed and if its set to 'true' then it will only be added
 
 **Capturing and Bubbling**
 
@@ -1529,11 +1558,6 @@ A technique called **event delegation** provides a solution for these problems, 
 if our event listener is on an element than everything nested is accessible 
 
 The above, described behavior, surfaces the relationship of nested elements to events. Do you notice the pattern? The number of elements you can interact with is equal to the element (the `div#elem1` element) the event listener was added to plus the number of its **"nested"** inner elements (`div#elem2`, `div#elem3` and `div#elem4` elements). 
-
-// take note that the function expression syntax is used to create the callback function
-elem2.addEventListener('click', function(event) {
-  alert(event.currentTarget.id);
-});
 
 `this` is the `currentTarget`
 
@@ -1643,7 +1667,7 @@ The default behavior isn't for the element that the event listener is attached t
 
 The browser waits for the event object to go through the propagation phases (capturing and bubbling) before it performs the default action of the event. If there's an event handler with a `preventDefault` call somewhere in the propagation path, the default behavior is skipped.
 
-SKIP OVER A preventDefault using stop probation
+
 
 **Event Delegation/ Event Propogation**
 
@@ -1740,7 +1764,7 @@ Video:
 
 https://www.youtube.com/watch?v=8zKuNo4ay8E&embeds_referring_euri=https%3A%2F%2Flaunchschool.com%2F&source_ve_path=MA&feature=emb_rel_pause
 
-
+The **event loop**, the **web APIs** and the **message queue**/**task queue** are not part of the JavaScript engine, it’s a part of browser’s JavaScript runtime environment or Nodejs JavaScript runtime environment (in case of Nodejs). In Nodejs, the web APIs are replaced by the C/C++ APIs.
 
 
 
@@ -1949,7 +1973,7 @@ let flakyService = new Promise((resolve, reject) => {
   })
 ```
 
-The return value of a promise is Promise object{{<fulfulled>: 'Operation Successful'}}. It looks like the Promise constructor function takes a function as an argument (executor) that takes two arguements that are callback functions. Those functions return Promise objects that have the then and catch and finally methods defined. 
+The return value of a promise is a Promise object{{<fulfulled>: 'Operation Successful'}}. It looks like the Promise constructor function takes a function as an argument (executor) that takes two arguements that are callback functions. Those functions return Promise objects that have the then and catch and finally methods defined. 
 
 But if its unsuccessful and doesnt have a catch statement it will return an error 
 
@@ -1960,6 +1984,9 @@ Uncaught (inpromise) Operation failed. Then then/catch/finally methods also retu
 One of the powers of promises is their ability to be chained. When you attach a `.then()`method to a promise, it also returns a new promise, which can be handled with another `.then()` or `.catch()`. This allows for cleaner asynchronous flow control.
 
 To conclude, promises are an elegant way to manage asynchronous operations in JavaScript. They make it possible to write more predictable code compared to traditional callback approaches. With the understanding of promise states and how to use `.then()`, `.catch()`, and `.finally()`, you have the foundation to control more complex asynchronous operations in your code.
+
+- `Promise.resolve()` is a static method used to create a resolved promise with a specified value.
+- `resolve()` is not a method directly available on an instance of a promise. It's typically used as a function provided to the executor function when creating a promise, to fulfill the promise with a value.
 
 
 
@@ -2185,6 +2212,27 @@ Promise.all([promise1, promise2, promise3]).then((values) => {
 });
 ```
 
+or 
+
+- If all promises in the iterable resolve successfully, `Promise.all` resolves with an array of their respective resolved values.
+- If any promise in the iterable rejects, `Promise.all` immediately rejects with the reason of the first promise that rejects.
+
+```js
+let promise1 = Promise.resolve(3);
+let promise2 = 42;
+let promise3 = new Promise((resolve, reject) => {
+  setTimeout(reject, 1000, "foo");
+});
+
+Promise.all([promise1, promise2, promise3])
+.then((values) => {
+  console.log(values);
+})
+.catch(console.log)
+
+//'foo'
+```
+
 
 
 **Promise.race()**
@@ -2210,6 +2258,20 @@ Promise.race([promise1, promise2]).then((value) => {
 
 things to note: the way that `setTimeout(resolve, 100, "two");` is set up. "two" is passed to `resolve`
 
+```js
+const firstResource = new Promise((resolve,reject) =>
+  setTimeout(() => reject("First resource failed"), 5000)
+);
+const secondResource = new Promise((resolve, reject) =>
+  setTimeout(() => reject("Second resource failed"), 1000)
+);
+
+Promise.race([firstResource, secondResource])
+  .then(console.log)
+  .catch(console.log)
+//Second resource failed
+```
+
 
 
 **Promise.allSettled()**
@@ -2228,6 +2290,17 @@ let promises = [promise1, promise2];
 Promise.allSettled(promises).then((results) =>
   results.forEach((result) => console.log(result.status))
 );
+```
+
+will get answer like this 
+
+```js
+[
+  { "status": "fulfilled", "value": 1 },
+  { "status": "rejected", "reason": "Error" },
+  { "status": "fulfilled", "value": 3 }
+]
+
 ```
 
 
@@ -2470,9 +2543,7 @@ APIs that are built with web technologies
 **Provider and Consumer**
 
 - An API **provider** is the system that provides an API for other parties to use. GitHub is the *provider* of the GitHub API, and Dropbox is the *provider* of the Dropbox API.
-- An API **consumer** is the system that uses the API to accomplish some work. When you check the weather on your phone, it is running a program that is *consuming* a wea
-- ther API to retrieve forecast data.
-
+- An API **consumer** is the system that uses the API to accomplish some work. When you check the weather on your phone, it is running a program that is *consuming* a weather API to retrieve forecast data.
 - *Web APIs* allow one system to interact with another over HTTP (just like the web).
 - The system offering the API for use by others is the *provider*.
 - The system interacting with the API to accomplish a goal is the *consumer*.
@@ -2573,7 +2644,7 @@ A **data serialization format** describes a way for programs to convert data int
 
 **XML** (or **extensible markup language**) shares common heritage with HTML: they are both based on an earlier and similar type of markup, SGML
 
-More struct than HTML and used in older apps 
+More strict than HTML and used in older apps 
 
 
 
@@ -2937,6 +3008,8 @@ HTTP request from a web browser that *does not perform a full page load.*
 - The web browser doesn't make an automatic HTTP request; instead, JavaScript code initiates it, typically from an event listener.
 - When the browser receives a response, JavaScript code *optionally* takes the response's body and updates the page as needed. Note that the JavaScript code is free to ignore the response.
 - **To summarize: when requesting a resource using JavaScript, the  developer must write code that initiates the request and then optionally handles the response.**
+- AJAX, an acronym for asynchronous JavaScript and XML, is a means of obtaining data from a server after the page has already been loaded and rendered.
+- It also allows sending data back to the server without reloading the page. AJAX is used much more often in modern websites and applications to provide that "snappy" or immediate response feeling.
 
 One popular use case for AJAX is to display some pertinent information  in a popup when the user hovers the mouse pointer over certain words:
 
@@ -4037,7 +4110,7 @@ $(function () {
 
 **JQuery Event Delegation**
 
-When you have an event handler that is being bound to a large number of elements that all exist within the same container, it's more efficient to delegate the event handling to the parent element rather than bind it to each element individually. Think of a list of 30 items, each of which includes a link to delete the item from the list. If we used an event bound directly to the anchor, there will be 30 events bound. This may not slow down our page that much, but if we have larger and larger sets of elements that all use the same event handler, we'll have a very inefficient application that will be prone to slowdowns.
+When you have an event handler that is being bound to a large number of elements that all exist witr than bind it to each element individually. Think of a list of 30 items, each of which includes a link to delete the item from the list. If we used an event bound directly to the anchor, there will be 30 events bound. This may not slow down our page that much, but if we have larger and larger sets of elements that all use the same event handler, we'll have a very inefficient application that will be prone to slowdowns.
 
 ```html
 <ul>
@@ -4386,3 +4459,223 @@ https://launchschool.com/lessons/e1800f40/assignments/7c85baf6
 **Reading**
 
 https://www.sitepoint.com/a-beginners-guide-to-handlebars/
+
+
+
+
+
+**jQuery Ajax**
+
+The syntax for `XMLHttpRequest` isn't the most concise, and early implementations of XMLHttpRequest had a few cross-browser inconsistencies. jQuery's `ajax()` method sought to deal with this by providing a simple interface that acts as a *wrapper* for that complexity.
+
+https://learn.jquery.com/ajax/
+
+- The way that the `ajax()` method uses a *configuration object* to specify the various parameters of the request
+- The fact that responses are handled by *using a callback* passed to a method chained to the initial `ajax()` call
+-  It offers both a full-featured `$.ajax()` method, and simple convenience methods such as `$.get()`, `$.getScript()`, `$.getJSON()`, `$.post()`, and `$().load()`.
+
+Most jQuery applications don't in fact use XML, despite the name "Ajax"; instead, they transport data as plain HTML or JSON (JavaScript Object Notation).
+
+ The `$.ajax()` method is particularly valuable because it offers the ability to specify both success and failure callbacks. Also, its ability to take a configuration object that can be defined separately makes it easier to write reusable code.
+
+```js
+// Using the core $.ajax() method
+$.ajax({
+ 
+    // The URL for the request
+    url: "post.php",
+ 
+    // The data to send (will be converted to a query string)
+    data: {
+        id: 123
+    },
+ 
+    // Whether this is a POST or GET request
+    type: "GET",
+ 
+    // The type of data we expect back
+    dataType : "json",
+})
+  // Code to run if the request succeeds (is done);
+  // The response is passed to the function
+  .done(function( json ) {
+     $( "<h1>" ).text( json.title ).appendTo( "body" );
+     $( "<div class=\"content\">").html( json.html ).appendTo( "body" );
+  })
+  // Code to run if the request fails; the raw request and
+  // status codes are passed to the function
+  .fail(function( xhr, status, errorThrown ) {
+    alert( "Sorry, there was a problem!" );
+    console.log( "Error: " + errorThrown );
+    console.log( "Status: " + status );
+    console.dir( xhr );
+  })
+  // Code to run regardless of success or failure;
+  .always(function( xhr, status ) {
+    alert( "The request is complete!" );
+  });
+```
+
+The configuration object passed as an argument to the `ajax()` method invocation sets the `url`, request `type`, and `dataType`for the request.
+
+**Fetch API**
+
+https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+
+https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+
+https://developer.mozilla.org/en-US/docs/Web/API/Request
+
+https://developer.mozilla.org/en-US/docs/Web/API/Response
+
+https://developer.mozilla.org/en-US/docs/Web/API/Headers
+
+Fetch isn't a library like jQuery, but a Web API like `XMLHttpRequest`. It lets you make network requests like `XMLHttpRequest`, but it leverages the Promise syntax to provide a much simpler interface.
+
+The [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) provides a JavaScript interface for accessing and manipulating parts of the [protocol](https://developer.mozilla.org/en-US/docs/Glossary/Protocol), such as requests and responses.
+
+It also provides a global [`fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/fetch) method that provides an easy, logical way to fetch resources asynchronously across the network.
+
+Unlike [`XMLHttpRequest`](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) that is a callback-based API, Fetch is promise-based and provides a better alternative that can be easily used in [service workers](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API). Fetch also integrates advanced HTTP concepts such as [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) and other extensions to HTTP.
+
+```js
+async function logMovies() {
+  const response = await fetch("http://example.com/movies.json");
+  const movies = await response.json();
+  console.log(movies);
+}
+```
+
+The simplest use of `fetch()` takes one argument — the path to the resource you want to fetch — and does not directly return the JSON response body but instead returns a promise that resolves with a [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) object.
+
+The [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) object, in turn, does not directly contain the actual JSON response body but is instead a representation of the entire HTTP response. So, to extract the JSON body content from the [`Response`](https://developer.mozilla.org/en-US/docs/Web/API/Response) object, we use the [`json()`](https://developer.mozilla.org/en-US/docs/Web/API/Response/json)method, which returns a second promise that resolves with the result of parsing the response body text as JSON.
+
+```js
+// Example POST method implementation:
+async function postData(url = "", data = {}) {
+  // Default options are marked with *
+  const response = await fetch(url, {
+    method: "POST", // *GET, POST, PUT, DELETE, etc.
+    mode: "cors", // no-cors, *cors, same-origin
+    cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    credentials: "same-origin", // include, *same-origin, omit
+    headers: {
+      "Content-Type": "application/json",
+      // 'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    redirect: "follow", // manual, *follow, error
+    referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+    body: JSON.stringify(data), // body data type must match "Content-Type" header
+  });
+  return response.json(); // parses JSON response into native JavaScript objects
+}
+
+postData("https://example.com/answer", { answer: 42 }).then((data) => {
+  console.log(data); // JSON data parsed by `data.json()` call
+});
+```
+
+- This may look very similar to our jQuery Ajax example, and there are indeed similarities between the interfaces provided by the two. There are also some key differences to be aware of, including:
+- The Promise that `fetch()` returns won't reject if the response `status` is an HTTP error status code (i.e. response codes in the 4xx and 5xx ranges)
+- By default, `fetch()` won't send cookies. In order to send cookies with the request, the `credentials` [parameter](https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/fetch#Parameters)must be set to either `include`, or `same-origin`. The latter option sends credentials only if the request URL is on the same origin as the calling script.
+
+
+
+
+
+As you've seen, there are plenty of options for making Ajax requests: `XMLHttpRequest`, `fetch()`, and jQuery's `ajax()`. In addition, there are also specialist libraries such as [axios](https://github.com/axios/axios), which offers a similar feature set and browser support to jQuery Ajax, but leverages the Promises syntax in a similar way to the Fetch API.
+
+
+
+The Promise-based syntax used by Fetch provides a much simpler interface. There are various caveats to consider if wanting to use Fetch, in particular browser support. Fetch is a relatively new API, and is well supported in most modern browsers. If your project needs to support older browsers, such as an older version of IE, it may not be a suitable option (though you can still potentially use it by using the Fetch [polyfill](https://github.com/github/fetch), along with a Promises [polyfill](https://www.npmjs.com/package/promise-polyfill)).
+
+
+
+**Summary**
+
+- Use documentation efficiently to ramp up quickly on a new library or API when you need to use it for a particular project.
+- Use Developer Tools built in to the browser as part of your work-flow to test and debug your front-end code.
+- At its core, jQuery is a function that wraps a collection of DOM elements and some convenience methods into an object.
+- jQuery provides methods for many aspects of front-end development, such as interacting with the DOM, managing browser events, and making Ajax calls.
+- Handlebars is a minimal templating library which allows you to easily add and update sections of a web page.
+- The Fetch API and jQuery's `ajax()` are alternatives to `XMLHttpRequest` for making Ajax calls. At a high level they all do the same thing: make a HTTP request and then process the response once it is received.
+
+
+
+Dropdown menu - hide dropdown values depending on choice of other 
+
+```js
+document.addEventListener('DOMContentLoaded', event => {
+
+  let animClass = document.getElementById("animal-classifications")
+  let animals = document.getElementById("animals")
+
+  function showAll(...values) {
+    values.forEach(value => Array.from(value).forEach(option => option.style.display="block"));
+  }
+ 
+  function showFirst(items) {
+    return Array.from(items).filter(el => el.style.display === 'block')[0].value;
+  }
+
+  function hideDisplay(menu) {
+    return (...items) => {
+      items.push('Classifications', 'Animals');
+      items.forEach(item => document.querySelector(`option[value='${item}']`).style.display="none");
+      menu.value = showFirst(menu);
+    }
+  }
+
+  animClass.addEventListener('change', event => {
+    showAll(animals, animClass);
+    let displayFunc = hideDisplay(animals)
+    switch (animClass.value) {
+      case 'Vertebrate':
+        displayFunc();
+        break;
+      case 'Warm-blooded':
+        displayFunc('Salmon', 'Turtle');
+        break;
+      case 'Cold-blooded':
+        displayFunc('Bear', 'Whale', 'Ostrich');
+        break;
+      case 'Mammal':
+        displayFunc('Turtle', 'Salmon', 'Ostrich');
+        break;
+      case 'Bird':
+        displayFunc('Turtle', 'Salmon', 'Bear', 'Whale');
+        break;
+    }
+  })
+
+  animals.addEventListener('change', event => {
+    showAll(animals, animClass);
+    let displayFunc = hideDisplay(animClass)
+    switch (animals.value) {
+      case 'Bear':
+        displayFunc('Cold-blooded', 'Bird');
+        break;
+      case 'Turtle':
+        displayFunc('Warm-blooded', 'Mammal', 'Bird');
+        break;
+      case 'Whale':
+        displayFunc('Cold-blooded', 'Bird');
+        break;
+      case 'Salmon':
+        displayFunc('Warm-blooded', 'Mammal', 'Bird');
+        break;
+      case 'Ostrich':
+        displayFunc('Cold-blooded', 'Mammal');
+        break;
+    }
+  })
+  
+  document.getElementById('clear').addEventListener('click', event => {
+    event.preventDefault();
+    showAll(animals, animClass);
+    animals.value = showFirst(animals);
+    animClass.value = showFirst(animClass);
+  })
+})
+```
+
